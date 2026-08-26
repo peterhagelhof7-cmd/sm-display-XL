@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+**/include/config.h
+*.bin
+# Ausnahme: Web-Flasher-Firmware (GitHub Pages) muss getrackt sein.
+!docs/fw/*.bin
+firmware/logs/

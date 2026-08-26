@@ -1,0 +1,319 @@
+<title>Sensormeter Projektfamilie</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --paper: #E9E5D8;
+    --paper-raised: #FBFAF6;
+    --paper-sunken: #DEDACE;
+    --ink: #1E2530;
+    --ink-muted: #5B6472;
+    --line: #C7C2B4;
+    --copper: #B5622A;
+    --copper-strong: #8F4A1E;
+    --copper-wash: rgba(181, 98, 42, 0.12);
+    --patina: #3F6E63;
+    --patina-strong: #2C4F46;
+    --patina-wash: rgba(63, 110, 99, 0.12);
+    --indigo: #3B5B8C;
+    --indigo-strong: #2B4368;
+    --indigo-wash: rgba(59, 91, 140, 0.12);
+    --rust: #A63D2E;
+    --rust-strong: #7F2D21;
+    --rust-wash: rgba(166, 61, 46, 0.1);
+    --shadow: 0 1px 2px rgba(30, 37, 48, 0.06), 0 10px 26px -12px rgba(30, 37, 48, 0.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #141A22;
+      --paper-raised: #1B222C;
+      --paper-sunken: #10151C;
+      --ink: #E9E4D8;
+      --ink-muted: #8E97A3;
+      --line: #313A46;
+      --copper: #E08A4C;
+      --copper-strong: #F2A268;
+      --copper-wash: rgba(224, 138, 76, 0.15);
+      --patina: #74B7A6;
+      --patina-strong: #93CCBD;
+      --patina-wash: rgba(116, 183, 166, 0.14);
+      --indigo: #7FA0D9;
+      --indigo-strong: #A0BBE6;
+      --indigo-wash: rgba(127, 160, 217, 0.16);
+      --rust: #E38A78;
+      --rust-strong: #F0AA9C;
+      --rust-wash: rgba(227, 138, 120, 0.12);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 32px -14px rgba(0, 0, 0, 0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141A22; --paper-raised: #1B222C; --paper-sunken: #10151C;
+    --ink: #E9E4D8; --ink-muted: #8E97A3; --line: #313A46;
+    --copper: #E08A4C; --copper-strong: #F2A268; --copper-wash: rgba(224, 138, 76, 0.15);
+    --patina: #74B7A6; --patina-strong: #93CCBD; --patina-wash: rgba(116, 183, 166, 0.14);
+    --indigo: #7FA0D9; --indigo-strong: #A0BBE6; --indigo-wash: rgba(127, 160, 217, 0.16);
+    --rust: #E38A78; --rust-strong: #F0AA9C; --rust-wash: rgba(227, 138, 120, 0.12);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 32px -14px rgba(0, 0, 0, 0.6);
+  }
+  :root[data-theme="light"] {
+    --paper: #E9E5D8; --paper-raised: #FBFAF6; --paper-sunken: #DEDACE;
+    --ink: #1E2530; --ink-muted: #5B6472; --line: #C7C2B4;
+    --copper: #B5622A; --copper-strong: #8F4A1E; --copper-wash: rgba(181, 98, 42, 0.12);
+    --patina: #3F6E63; --patina-strong: #2C4F46; --patina-wash: rgba(63, 110, 99, 0.12);
+    --indigo: #3B5B8C; --indigo-strong: #2B4368; --indigo-wash: rgba(59, 91, 140, 0.12);
+    --rust: #A63D2E; --rust-strong: #7F2D21; --rust-wash: rgba(166, 61, 46, 0.1);
+    --shadow: 0 1px 2px rgba(30, 37, 48, 0.06), 0 10px 26px -12px rgba(30, 37, 48, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  h1, h2, h3 {
+    font-family: "Iowan Old Style", "Sitka Text", Georgia, serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  header { border-bottom: 1px solid var(--line); padding-bottom: 26px; margin-bottom: 44px; }
+  .eyebrow {
+    font: 600 12px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.11em; text-transform: uppercase; color: var(--copper);
+  }
+  h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 600; margin-top: 10px; }
+  .lede { max-width: 62ch; color: var(--ink-muted); font-size: 15.5px; margin-top: 12px; }
+  .lede .mono { color: var(--ink); }
+
+  /* ---------------- Diagram ---------------- */
+  .diagram-scroll { overflow-x: auto; margin: 0 -4px 8px; padding: 4px; }
+  .diagram {
+    position: relative;
+    width: 840px;
+    height: 800px;
+    margin: 0 auto;
+  }
+  .diagram > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .edge-line { fill: none; stroke: var(--line); stroke-width: 2; }
+  .edge-line.solid { stroke: var(--copper-strong); }
+  .edge-line.dashed { stroke: var(--indigo); stroke-dasharray: 2 7; stroke-linecap: round; }
+  .edge-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    padding: 3px 9px;
+    font: 600 10.5px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.03em;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+  }
+
+  .card {
+    position: absolute;
+    width: 240px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px 20px 18px;
+  }
+  .card.wlan        { left: 20px;  top: 8px;   border-top: 3px solid var(--patina); }
+  .card.sensormeter { left: 300px; top: 8px;   border-top: 3px solid var(--copper); }
+  .card.poe         { left: 580px; top: 8px;   border-top: 3px solid var(--rust); }
+  .card.display     { left: 300px; top: 410px; border-top: 3px solid var(--indigo); }
+
+  .card-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .card.sensormeter .card-icon { background: var(--copper-wash); color: var(--copper); }
+  .card.wlan .card-icon        { background: var(--patina-wash); color: var(--patina); }
+  .card.poe .card-icon         { background: var(--rust-wash); color: var(--rust); }
+  .card.display .card-icon     { background: var(--indigo-wash); color: var(--indigo); }
+  .card-icon svg { width: 30px; height: 30px; display: block; }
+  .card-icon svg, .card-icon svg * { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .card-icon svg .dot { fill: currentColor; stroke: none; }
+
+  .card h2 { font-size: 17px; font-weight: 600; margin-bottom: 3px; }
+  .card .tagline { font-size: 12px; color: var(--ink-muted); margin-bottom: 12px; min-height: 30px; }
+  .card .specs { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .spec-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; border-top: 1px solid var(--line); padding-top: 5px; }
+  .spec-row:first-child { border-top: none; padding-top: 0; }
+  .spec-row .k { color: var(--ink-muted); }
+  .spec-row .v { text-align: right; font-weight: 500; }
+  .card .repo { font: 500 10.5px/1 ui-monospace, Consolas, monospace; color: var(--ink-muted); word-break: break-all; }
+  .card.sensormeter .repo::before,
+  .card.wlan .repo::before,
+  .card.poe .repo::before,
+  .card.display .repo::before { content: "↳ "; }
+
+  /* ---------------- Shared-basis band ---------------- */
+  .basis {
+    margin-top: 26px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper-sunken);
+    padding: 18px 22px;
+  }
+  .basis h3 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-muted); font-family: inherit; margin-bottom: 12px;
+  }
+  .basis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 22px; }
+  .basis-item { font-size: 13px; }
+  .basis-item .t { color: var(--ink-muted); font-size: 11px; margin-bottom: 2px; }
+  .basis-item .d { font-weight: 500; }
+  .basis-item .d .mono { font-weight: 400; font-size: 12px; }
+
+  footer {
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-muted);
+  }
+  footer .mono { color: var(--ink); }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 40px 16px 64px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Skizze · Architekturübersicht</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <svg viewBox="0 0 48 48" fill="none" width="30" height="30" style="flex-shrink:0;">
+        <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="var(--line)" stroke-width="2.2" stroke-linejoin="round"/>
+        <circle cx="24" cy="9" r="5" fill="var(--copper)"/>
+        <circle cx="37.6" cy="32.5" r="5" fill="var(--indigo)"/>
+        <circle cx="10.4" cy="32.5" r="5" fill="var(--patina)"/>
+        <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="var(--ink)" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="24" cy="24.67" r="2.6" fill="var(--ink)"/>
+      </svg>
+      <h1>Sensormeter Projektfamilie</h1>
+    </div>
+    <p class="lede">
+      Vier ESP32-Firmware-Projekte, eine gemeinsame Herkunft: <span class="mono">Sensormeter</span>
+      ist der Ursprung, <span class="mono">Sensormeter WLAN</span> seine reduzierte, kabellose
+      Abwandlung, <span class="mono">Sensormeter PoE</span> die volle Ausstattung auf einem
+      PoE-fähigen Board – <span class="mono">Sensormeter Display</span> steht daneben und liest
+      alle drei per SNMP aus.
+    </p>
+  </header>
+
+  <div class="diagram-scroll">
+    <div class="diagram">
+      <svg viewBox="0 0 840 800" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <path class="edge-line solid" d="M 260 100 L 300 100" />
+        <path class="edge-line solid" d="M 540 100 L 580 100" />
+        <path class="edge-line dashed" d="M 140 324 L 340 410" />
+        <path class="edge-line dashed" d="M 420 324 L 420 410" />
+        <path class="edge-line dashed" d="M 700 380 L 500 410" />
+      </svg>
+
+      <div class="edge-label" style="left:240px; top:367px;">SNMP</div>
+      <div class="edge-label" style="left:600px; top:395px;">SNMP</div>
+
+      <div class="card wlan">
+        <div class="card-icon" aria-hidden="true">
+          <!-- WiFi -->
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 25.1a22 22 0 0 1 28.16 0"/><path d="M2.84 18a32 32 0 0 1 42.32 0"/><path d="M17.06 32.22a12 12 0 0 1 13.9 0"/><circle class="dot" cx="24" cy="40" r="1.8"/></svg>
+        </div>
+        <h2>Sensormeter WLAN</h2>
+        <div class="tagline">Die günstige Variante: gleiche Architektur, WLAN-only</div>
+        <div class="specs">
+          <div class="spec-row"><span class="k">Board</span><span class="v">ESP32-WROOM-32 DevKit</span></div>
+          <div class="spec-row"><span class="k">Netz</span><span class="v">WLAN-only</span></div>
+          <div class="spec-row"><span class="k">Sensoren</span><span class="v">1× DHT22</span></div>
+          <div class="spec-row"><span class="k">UI</span><span class="v">OLED + Weboberfläche</span></div>
+        </div>
+        <div class="repo">github.com/…/sensormeter-wlan</div>
+      </div>
+
+      <div class="card sensormeter">
+        <div class="card-icon" aria-hidden="true">
+          <!-- RJ45 / LAN plug -->
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="4" width="8" height="8" rx="1"/><rect x="8" y="12" width="32" height="24" rx="3"/><line x1="12" y1="36" x2="12" y2="42"/><line x1="15.4" y1="36" x2="15.4" y2="42"/><line x1="18.9" y1="36" x2="18.9" y2="42"/><line x1="22.3" y1="36" x2="22.3" y2="42"/><line x1="25.7" y1="36" x2="25.7" y2="42"/><line x1="29.1" y1="36" x2="29.1" y2="42"/><line x1="32.6" y1="36" x2="32.6" y2="42"/><line x1="36" y1="36" x2="36" y2="42"/></svg>
+        </div>
+        <h2>Sensormeter</h2>
+        <div class="tagline">Der Ursprung: Ethernet-first, bis zu zwei Sensoren</div>
+        <div class="specs">
+          <div class="spec-row"><span class="k">Board</span><span class="v">WT32-ETH01</span></div>
+          <div class="spec-row"><span class="k">Netz</span><span class="v">LAN + optional WLAN</span></div>
+          <div class="spec-row"><span class="k">Sensoren</span><span class="v">1–2× DHT (intern/extern)</span></div>
+          <div class="spec-row"><span class="k">UI</span><span class="v">Weboberfläche</span></div>
+        </div>
+        <div class="repo">github.com/…/sensormeter</div>
+      </div>
+
+      <div class="card poe">
+        <div class="card-icon" aria-hidden="true">
+          <!-- Power (PoE) -->
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M28 4 L14 28 L22 28 L18 44 L34 20 L25 20 Z"/></svg>
+        </div>
+        <h2>Sensormeter PoE</h2>
+        <div class="tagline">Die volle Ausstattung: Ethernet + optional PoE, RJ45-Modul, Relais, MQTT</div>
+        <div class="specs">
+          <div class="spec-row"><span class="k">Board</span><span class="v">Waveshare ESP32-S3-ETH</span></div>
+          <div class="spec-row"><span class="k">Netz</span><span class="v">Ethernet (W5500) + WLAN, PoE optional</span></div>
+          <div class="spec-row"><span class="k">Sensoren</span><span class="v">2× DHT-22 (intern + RJ45-Modul)</span></div>
+          <div class="spec-row"><span class="k">UI</span><span class="v">OLED + Weboberfläche</span></div>
+        </div>
+        <div class="repo">github.com/…/sensormeter-poe</div>
+      </div>
+
+      <div class="card display">
+        <div class="card-icon" aria-hidden="true">
+          <!-- Display / touch -->
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="8" width="34" height="24" rx="2"/><circle cx="24" cy="20" r="3.2"/><line x1="24" y1="32" x2="24" y2="38"/><line x1="17" y1="38" x2="31" y2="38"/></svg>
+        </div>
+        <h2>Sensormeter Display</h2>
+        <div class="tagline">Der Betrachter: fragt alle drei Geschwister per SNMP ab</div>
+        <div class="specs">
+          <div class="spec-row"><span class="k">Board</span><span class="v">HW-458B (ESP32 + Touch-TFT)</span></div>
+          <div class="spec-row"><span class="k">Netz</span><span class="v">WLAN</span></div>
+          <div class="spec-row"><span class="k">Sensoren</span><span class="v">1× DHT11 + SNMP-Abfrage</span></div>
+          <div class="spec-row"><span class="k">UI</span><span class="v">Touchscreen + Weboberfläche</span></div>
+        </div>
+        <div class="repo">github.com/…/sensormeter-display</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="basis">
+    <h3>Was die Familie verbindet</h3>
+    <div class="basis-grid">
+      <div class="basis-item">
+        <div class="t">SNMP-Basis-OID</div>
+        <div class="d mono">.1.3.6.1.4.1.99999.x</div>
+      </div>
+      <div class="basis-item">
+        <div class="t">Fallback-WLAN</div>
+        <div class="d mono">installer / installer</div>
+      </div>
+      <div class="basis-item">
+        <div class="t">Architektur</div>
+        <div class="d">Manager-Module mit <span class="mono">begin()</span>/<span class="mono">loop()</span></div>
+      </div>
+      <div class="basis-item">
+        <div class="t">Web-Login</div>
+        <div class="d">Benutzer <span class="mono">admin</span>, projektspezifisches Default-Passwort</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sensormeter Projektfamilie — Architekturübersicht, identische Kopie in allen fünf Repos ·
+    Entwickelt mit Unterstützung von Claude (Anthropic) als Coding-Assistent
+  </footer>
+</div>

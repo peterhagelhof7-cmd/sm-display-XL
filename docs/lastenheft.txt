@@ -1,0 +1,268 @@
+LASTENHEFT – SENSORMETER DISPLAY (HW-458B / ESP32 2,8" Touchdisplay)
+
+1. PROJEKT
+Projektname: Sensormeter Display
+Führendes Dokument: Beschreibung.txt (dieses Lastenheft ist dessen strukturierte
+Ausarbeitung). Lastenheft_ESP32_Touchsystem.pdf / _v2.pdf und
+deepseek_txt_20260620_1ca0c2.txt sind Vorgängerversionen und nur noch als
+Referenz relevant, soweit sie unten explizit übernommen werden.
+
+------------------------------------------------------------
+
+2. SYSTEMBASIS
+
+Hardware: HW-458B – "ESP32 2,8" Display-Entwicklungsboard"
+(bestätigt durch Datenblatt CBAA0055-008_DE.pdf und Foto CYD.jpg,
+Platinenaufdruck "HW-458")
+
+- MCU: ESP-WROOM-32 (klassischer ESP32, NICHT ESP32-S3)
+  Flash 32 Mbit, SRAM 520 KB
+- Display: 2,8" TFT, 240x320, Treiber ST7789P3, 4-Draht-SPI
+- Touch: resistiv, 4-Draht, eigener Touch-Controller (nicht kapazitiv/I2C)
+  TP_CLK = IO25, TP_CS = IO33, TP_DIN = IO32, TP_OUT = IO39, TP_IRQ = IO36
+- Hintergrundbeleuchtung: IO21 (PWM-fähig, für Helligkeitsregelung)
+- RGB-Status-LED: IO17 (R), IO4 (G), IO16 (B)
+- Lichtsensor (Fotowiderstand, Rückseite): IO34
+- Audio: IO26, Lautsprecherbuchse 2p 1,25 mm, 1,5 W / 4 Ω
+- TF/SD-Karte: CD/DAT3 = IO5, CMD = IO23, CLK = IO18, DAT0 = IO19
+- Serielle Schnittstelle (4p 1,25 mm): VIN, TX, RX, GND
+- USB-C und Micro-USB (Strom + Daten)
+- Stromaufnahme: ~300 mA Spitze @ 3,3 V, Deep-Sleep 6,5 µA
+- Abmessungen Board: 85,85 x 49,40 mm
+
+DHT11 (extern angeschlossen, intern im Sinne des Lastenhefts = "eingebauter"
+Sensor des Gesamtsystems):
+- Anschluss über Steckverbinder "Erweiterungsanschluss IO2"
+  (4p 1,25 mm: GND, IO22, IO27, 3,3V)
+- Datenleitung: IO22
+  ENTSCHEIDUNG: nicht literal GPIO2 (wie in den Vorgänger-Lastenheften
+  angegeben), da GPIO2 ein Boot-Strapping-Pin des ESP32 ist und laut
+  Hersteller-Pinout am Steckverbinder "IO2" gar nicht anliegt. Stattdessen
+  IO22, da dort frei (keine anderweitige Nutzung auf diesem Board vorgesehen).
+  Alternative am selben Steckverbinder wäre IO27 (belegt als TOUCH7/ADC2_CH7) –
+  beim praktischen Aufbau gegen die reale Verdrahtung/Silkscreen verifizieren.
+
+Nicht verbaut / nicht Teil dieses Projekts: Erweiterungsanschluss "IO1"
+(GND, IO35, IO22, IO21) – wird aktuell nicht genutzt.
+
+------------------------------------------------------------
+
+3. ZIELSETZUNG
+Stationäres Touchdisplay-System, das wahlweise Innenraumklima (DHT11),
+Uhrzeit/Datum, Messwerte eines anderen Netzwerkgeräts (Sensormeter-Projekt,
+SNMP) oder Ping-Laufzeiten zu bis zu 6 Zielen anzeigt. Bedienung ausschließlich
+über den Touchscreen, keine Cloud-Anbindung, WLAN-Konfiguration direkt am
+Gerät.
+
+------------------------------------------------------------
+
+4. GUI – ALLGEMEIN
+
+- Schriftart systemweit: 7-Segment-artig (digital/technisch wirkend)
+- Grunddarstellung: weißer Hintergrund, schwarze Schrift
+- Ausrichtung: Querformat (Landscape), 320x240 sichtbar
+- Statusleiste (permanent eingeblendet, außer im Static-Modus mit Datenquelle
+  "Uhrzeit", siehe 6.2): max. 15 % der langen Bildschirmkante, Symbole in
+  hellgrau
+  - Zahnrad-Symbol: öffnet Einstellungen (touch-sensitiv)
+  - WLAN-Empfangssymbol: 3-Balken-Antenne, Balkenzahl proportional zur
+    Signalstärke; blinkt, wenn kein WLAN verbunden
+  - DHT11: aktuelle Temperatur (°C) und Luftfeuchte (%)
+  - Uhrzeit/Datum: am gegenüberliegenden Bildschirmrand
+
+------------------------------------------------------------
+
+5. ERSTINBETRIEBNAHME
+
+5.1 Touch-Kalibrierung
+Bei allererstem Start (kein Kalibrierungsdatensatz im Flash vorhanden):
+Kalibrierroutine vor allen anderen Schritten. Kalibrierdaten werden im Flash
+abgelegt und bei jedem weiteren Boot geladen; erneute Kalibrierung nur über
+Systemeinstellungen (siehe 7.4) manuell auslösbar.
+ÜBERNOMMEN aus Vorgänger-Lastenheft, da Beschreibung.txt es nicht mehr
+erwähnt, das Touch-Panel dieses Boards (resistiv, 4-Draht) aber grundsätzlich
+kalibrierbedürftig ist.
+
+5.2 WLAN-Ersteinrichtung
+- Automatischer WLAN-Scan bei Erststart (kein gespeichertes WLAN vorhanden)
+- Anzeige der gefundenen Netze als Liste; "Aktualisieren"-Button löst neuen
+  Scan aus
+- Auswahl eines Netzes per Antippen → Eingabefeld für PSK erscheint,
+  gleichzeitig Bildschirmtastatur (inkl. gängiger Sonderzeichen) im unteren
+  Bereich
+- Nach erfolgreicher Verbindung: WLAN-Zugangsdaten im Flash speichern,
+  zukünftig automatischer Verbindungsaufbau bei jedem Start
+
+------------------------------------------------------------
+
+6. BETRIEBSARTEN (über Einstellungen wählbar, Speicherung im Flash)
+
+6.1 Slide
+Zyklischer Wechsel der angezeigten Datenquelle(n). Wechselintervall
+einstellbar 5–60 Sekunden in 5-Sekunden-Schritten.
+
+6.2 Static
+Anzeige genau einer festgelegten Datenquelle. Wird "Uhrzeit" als Datenquelle
+gewählt, entfällt das Uhrzeit-Symbol der Statusleiste und die Uhrzeitanzeige
+nutzt die dadurch gewonnene zusätzliche Fläche.
+
+6.3 Snake
+Steuerung über Touch-Zonen: oberes Drittel = hoch, unteres Drittel = runter,
+linkes Drittel = links, rechtes Drittel = rechts. Nach Spielende: Punktzahl
+20 Sekunden einblenden, danach automatische Rückkehr zu den Einstellungen.
+
+6.4 Systemeinstellungen
+- Helligkeit: +/- Buttons, Default 60 %
+- WLAN: erneute Netzauswahl, Ablauf identisch zu 5.2
+- Touch-Kalibrierung erneut auslösen (siehe 5.1)
+
+Jede Auswahl wird sofort im Flash gespeichert.
+
+------------------------------------------------------------
+
+7. DATENQUELLEN
+
+7.1 Interner DHT11
+- Oberes Drittel: aktueller Wert (°C und %)
+- Untere zwei Drittel: Temperaturverlauf-Graph
+  - Messpunkt alle 30 Minuten, Zeitachse 12 Stunden (= 24 Messpunkte)
+  - Temperatur: linke Hochachse, rot, Auflösung volle °C
+  - Luftfeuchte: rechte Hochachse, blau, Auflösung volle %
+- Verlaufsdaten in CSV im Flash gespeichert, nach Neustart geladen
+  (Ringpuffer 24 Einträge à 30 Minuten = 12h Historie, konsistent mit obiger
+  Zeitachse)
+
+7.2 Uhrzeit
+- NTP-Quelle: de.pool.ntp.org, deutsche Zeitzone inkl. Sommerzeit
+- Obere zwei Drittel: Uhrzeit HH:MM, 24-Stunden-Format
+- Unteres Drittel: Wochentag (deutsch) + Datum DD.MM.JJJJ
+- Schriftgröße gut lesbar (deutlich größer als Statuszeile)
+
+7.3 Sensormeter (SNMP)
+Abfrage des bestehenden "Sensormeter"-Projekts (WT32-ETH01) per SNMP v2c
+(bis 2026-07-21 v1 - siehe docs/entscheidungen.md).
+OID-Struktur bereits aus diesem Projekt bekannt, daher hier bereits final
+festgelegt statt "wird nachgereicht":
+
+  .1.3.6.1.4.1.99999.1  System     (.1 Name, .2 Firmware, .3 Typ)
+  .1.3.6.1.4.1.99999.2  Netzwerk   (.1 LAN-IP, .2 WLAN-IP, .3 RSSI)
+  .1.3.6.1.4.1.99999.3  Sensor 1   (.1 Name, .2 Temperatur, .3 Luftfeuchte)
+  .1.3.6.1.4.1.99999.4  Sensor 2   (.1 Name, .2 Temperatur, .3 Luftfeuchte;
+                                     nur bei Sensormeter PRO belegt)
+  .1.3.6.1.4.1.99999.5  Systemstatus (.1 Uptime, .2 freier Heap)
+
+Für die Anzeige relevant: Sensor-1-Temperatur/Luftfeuchte (.3.2.0 / .3.3.0),
+optional Sensor 2 (.4.2.0 / .4.3.0), sofern Zielgerät vom Typ PRO ist.
+Ziel-IP und SNMP-Community sind in den Einstellungen des Displays zu
+hinterlegen (kein automatisches Discovery).
+
+7.4 Ping
+- Dauerhafter Ping an google.com, Anzeigewert = Durchschnitt der letzten
+  5 Antwortzeiten in ms
+- Bis zu 5 weitere Ping-Ziele über Einstellungen konfigurierbar
+  - Anzahl per Dropdown wählbar (0–5)
+  - je Ziel: IP-Adresse eingeben
+  - Darstellung: eigene Slide, eine Zeile pro Ziel (IP-Adresse + Status),
+    Zeile grün bei Antwort, Zeile rot bei Fehler
+
+7.5 Anbieter-Branding (Weisslabel)
+Wie die anderen Sensormeter-Projekte (siehe deren docs/entscheidungen.md):
+optionale Zusatzkennzeichnung, unabhängig vom Systemnamen - freier
+Anbietername und/oder ein Logo-Bild. Beide unabhängig voneinander
+optional; ohne beides zeigt diese Slide einen Platzhalter ("Kein
+Branding konfiguriert") statt zu entfallen - anders als bei den
+OLED-Geschwisterprojekten (dort dynamisches Ein-/Ausblenden), da diese
+Datenquellen-Liste ohnehin nie nach Konfigurationsstand filtert (auch
+Sensormeter-/Ping-Ziele bleiben unkonfiguriert in der Rotation).
+
+- Logo-Format: 128x64 Pixel (dieselbe Auflösung wie bei den OLED-Projekten,
+  aber RGB565-Farbe statt 1-Bit-Monochrom), 2 Byte pro Pixel Little-Endian,
+  exakt 16.384 Byte - kein PNG/JPEG-Decoder eingebunden. Erzeugbar mit
+  scripts/convert-logo.ps1 -Display display.
+- Darstellung: bevorzugt das Logo zentriert im Inhaltsbereich, ohne Logo
+  der Anbietername als grosse Textzeile.
+- Weboberfläche: Logo (falls vorhanden) und Anbietername erscheinen im
+  Kopfbereich von Dashboard UND Einstellungsseite.
+- Logo-Upload/-Löschen über die Einstellungsseite (Abschnitt 11).
+
+------------------------------------------------------------
+
+8. NORMALER BETRIEB – ABFRAGETAKTE
+
+- DHT11: alle 5 Sekunden
+- Sensormeter (SNMP): alle 30 Sekunden, nur wenn konfiguriert
+- Ping: kontinuierlich (Ziel google.com sowie ggf. konfigurierte Zusatzziele)
+
+------------------------------------------------------------
+
+9. FEHLERBEHANDLUNG
+
+- Ping schlägt länger als 1 Minute fehl (Ziel google.com) ODER ein
+  Warnschwellwert ist über-/unterschritten (siehe Abschnitt 11,
+  Nachtrag über den ursprünglichen Beschreibung.txt-Umfang hinaus):
+  - Status-LED blinkt (500ms-Takt)
+  - Display-Hintergrund blinkt (1s-Takt) - rot bei Überschreitung/Ausfall,
+    blau bei Unterschreitung eines Minimalwerts
+  - Statusleiste zeigt die betroffene Quelle ("Intern"/"Sensormeter"/
+    "Ping", ggf. "+N" bei mehreren gleichzeitig betroffenen Quellen)
+- WLAN nicht verbunden: WLAN-Symbol blinkt (siehe 4.)
+
+------------------------------------------------------------
+
+10. DATEISYSTEM (Flash, LittleFS – analog zum Sensormeter-Projekt)
+
+- WLAN-Zugangsdaten (SSID/PSK)
+- Touch-Kalibrierdaten
+- Systemeinstellungen: Betriebsmodus, Slide-Intervall, Static-Datenquelle,
+  Helligkeit, Ping-Ziele (IP-Liste), Sensormeter-Zielgerät(e) (IP + Community),
+  Warnschwellwerte (DHT11/Sensormeter/Ping), DHT11-Kalibrierkorrektur
+- history.csv: DHT11-Verlauf, Ringpuffer 24 Einträge (siehe 7.1)
+- Snake-Highscore
+
+------------------------------------------------------------
+
+11. WEBSERVER (ZUSATZFUNKTION, NICHT TEIL VON BESCHREIBUNG.TXT)
+
+Nachtrag nach P0-P8: ein Webserver (Port 80) ergänzt die Touch-Bedienung
+um eine Fernkonfigurations- UND Fernanzeige-Möglichkeit, aufgeteilt in
+zwei Seiten:
+
+Öffentliches Status-Dashboard ("/", NICHT passwortgeschützt, Auto-Refresh
+alle 30s, rein lesend):
+- Aktuelle DHT11-Werte + Verlaufsgraph (inline SVG, inkl. Achsenbeschriftung
+  und Warnschwellwert-Linien)
+- WLAN-Status (Signalbalken, IP)
+- Sensormeter-Ziele mit aktuellen Messwerten
+- Ping-Status (google.com + Zusatzziele)
+- Alarmbanner bei überschrittenem Warnschwellwert
+
+Einstellungsbereich ("/settings", HTTP-Basic-Auth, Benutzername "admin",
+Passwort einstellbar):
+- Systemname, Web-Passwort
+- Betriebsmodus (Slide + Intervall / Static + Datenquelle)
+- Helligkeit
+- Sensormeter-Ziel(e) (IP + Community, IP nachträglich änderbar)
+- Ping-Ziele (hinzufügen/entfernen, max. 5)
+- Warnschwellwerte (DHT11 intern, Sensormeter pro Ziel/Sensor, Ping-Latenz)
+  - bei Über-/Unterschreitung blinkt der Bildschirm rot/blau, LED und
+    Statusleiste zeigen die betroffene Quelle (siehe Abschnitt 9)
+- DHT11-Kalibrierkorrektur (fester Temperatur-/Feuchte-Versatz, ganzzahlig)
+- Firmware-Update per lokalem .bin-Upload (kein Remote-Versionscheck,
+  siehe docs/entscheidungen.md)
+
+Kein REST-API/JSON - das Dashboard ist reines HTML mit inline SVG, keine
+eigene API zum programmgesteuerten Abfragen.
+
+------------------------------------------------------------
+
+12. AUSDRÜCKLICH NICHT TEIL DIESES LASTENHEFTS
+
+Folgende Punkte aus den Vorgänger-Lastenheften wurden bewusst NICHT
+übernommen (Entscheidung des Auftraggebers):
+- Display-Energiesparen / automatische Abschaltung (1/5/15 min oder dauerhaft)
+- Watchdog
+- Explizite Zeitvorgaben (Bootzeit < 10 s, Touch-Reaktion < 100 ms,
+  Menüwechsel < 200 ms)
+- Explizite WLAN-Verhaltensdetails (5 gespeicherte Netze, 20 s Timeout,
+  60 s Retry) – Grundverhalten "verbindet automatisch beim Start" bleibt
+  aus Beschreibung.txt bestehen, ohne die genannten Detailwerte

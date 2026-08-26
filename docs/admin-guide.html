@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Sensormeter Display — Admin-Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1c2430;
+    background: #ffffff;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .cover {
+    background: #0f1f3d;
+    color: #fff;
+    margin: -18mm -16mm 12mm -16mm;
+    padding: 30mm 16mm 16mm 16mm;
+  }
+  .cover .eyebrow { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #9fb3d9; margin-bottom: 6mm; }
+  .cover h1 { margin: 0 0 4mm 0; font-size: 30px; }
+  .cover .subtitle { color: #cdd8ec; font-size: 13px; max-width: 130mm; }
+  .cover .badges { margin-top: 8mm; display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 3px; font-size: 10px; font-weight: 600; background: #24365c; color: #cdd8ec; }
+  .badge-orange { background: #c8622a; color: #fff; }
+
+  h1.section { font-size: 18px; color: #0f1f3d; border-bottom: 2px solid #c8622a; padding-bottom: 2mm; margin: 14mm 0 5mm 0; page-break-after: avoid; }
+  h1.section .num { color: #c8622a; margin-right: 2mm; }
+  h2 { font-size: 13.5px; color: #8f4a1e; margin: 6mm 0 2mm 0; page-break-after: avoid; }
+  h3 { font-size: 12px; color: #1c2430; margin: 4mm 0 1.5mm 0; page-break-after: avoid; }
+  p { margin: 0 0 3mm 0; }
+  ul, ol { margin: 0 0 3mm 0; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  code, .code {
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    background: #f2f0e9;
+    border: 1px solid #e4e1d8;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    word-break: break-all;
+  }
+  pre.code-block {
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    background: #f2f0e9;
+    color: #1c2430;
+    border: 1px solid #c7c2b4;
+    border-left: 3px solid #8f4a1e;
+    border-radius: 0 4px 4px 0;
+    padding: 3mm 4mm;
+    font-size: 11px;
+    line-height: 1.6;
+    margin: 2mm 0 4mm 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+  .callout {
+    border-left: 3px solid #c8622a;
+    background: #fbf3ee;
+    padding: 3mm 4mm;
+    margin: 3mm 0;
+    border-radius: 0 3px 3px 0;
+  }
+  .callout.warn { border-left-color: #a63d2e; background: #fbeeec; }
+  .callout.warn .callout-title { color: #a63d2e; }
+  .callout-title { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #8f4a1e; margin-bottom: 1mm; }
+  table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm 0; }
+  table th, table td { border: 1px solid #e4e1d8; padding: 1.5mm 2.5mm; font-size: 11px; text-align: left; vertical-align: top; }
+  table th { background: #f2f0e9; }
+
+  /* --- Screen sketches --- */
+  .sketch-wrap { display: flex; gap: 6mm; align-items: flex-start; margin: 3mm 0 5mm 0; page-break-inside: avoid; }
+  .sketch-wrap.stack { flex-direction: column; }
+  .sketch-notes { flex: 1; font-size: 11px; }
+  .sketch-notes ul { padding-left: 4mm; }
+  .device {
+    flex-shrink: 0;
+    width: 78mm;
+    background: #2b2f36;
+    border-radius: 4mm;
+    padding: 3mm;
+  }
+  .device .screen {
+    position: relative;
+    width: 72mm;
+    height: 54mm;
+    background: #ffffff;
+    overflow: hidden;
+    font-size: 5.4px;
+    color: #111;
+  }
+  .device .screen.alert { background: #ffe4e1; }
+  .sk-bar {
+    position: absolute; left: 0; width: 100%; height: 15%;
+    display: flex; align-items: center; gap: 2mm; padding: 0 2mm;
+    border-bottom: 0.3mm solid #ccc; box-sizing: border-box;
+  }
+  .sk-bar.bottom { top: 85%; border-bottom: none; border-top: 0.3mm solid #ccc; justify-content: space-between; }
+  .sk-bar.top { top: 0; justify-content: flex-start; }
+  .sk-icon { width: 3.2mm; height: 3.2mm; border: 0.25mm solid #444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.6mm; color: #444; }
+  .sk-icon.gear::after { content: "\2699"; }
+  .sk-icon.info::after { content: "i"; font-weight: 700; }
+  .sk-bars { display: flex; align-items: flex-end; gap: 0.4mm; height: 3mm; }
+  .sk-bars span { width: 0.9mm; background: #444; }
+  .sk-dht { margin-left: auto; font-size: 2.8mm; color: #333; }
+  .sk-content { position: absolute; top: 15%; left: 0; width: 100%; height: 70%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1mm; }
+  .sk-content.full { height: 85%; }
+  .sk-big { font-size: 6mm; font-weight: 700; letter-spacing: -0.3mm; }
+  .sk-label { font-size: 2.8mm; color: #555; }
+  .sk-menu-row, .sk-list-row { border: 0.25mm solid #333; border-radius: 0.5mm; padding: 0.8mm 1.5mm; margin: 0 3mm; font-size: 2.9mm; text-align: center; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .sk-list-row { justify-content: space-between; text-align: left; }
+  .sk-list-row .x { border: 0.25mm solid #333; padding: 0 1mm; }
+  .sk-list-row.ok { background: #d9f2df; }
+  .sk-list-row.err { background: #f9d6d2; }
+  .sk-close { position: absolute; top: 1mm; right: 1mm; width: 4mm; height: 4mm; border: 0.25mm solid #333; display: flex; align-items: center; justify-content: center; font-size: 2.6mm; }
+  .sk-title { position: absolute; top: 0.8mm; left: 1.5mm; font-size: 3.2mm; font-weight: 700; }
+  .sk-crosshair { position: absolute; width: 3mm; height: 3mm; }
+  .sk-crosshair::before, .sk-crosshair::after { content: ""; position: absolute; background: #c8622a; }
+  .sk-crosshair::before { left: 0; top: 50%; width: 100%; height: 0.3mm; transform: translateY(-50%); }
+  .sk-crosshair::after { top: 0; left: 50%; height: 100%; width: 0.3mm; transform: translateX(-50%); }
+  .sk-adjbtn { position: absolute; top: 40%; width: 8mm; height: 8mm; border: 0.25mm solid #333; display: flex; align-items: center; justify-content: center; font-size: 4mm; }
+  .sk-key { border: 0.2mm solid #333; font-size: 2.4mm; display: flex; align-items: center; justify-content: center; }
+  .sk-kbrow { position: absolute; left: 0; width: 100%; display: flex; }
+  .sk-graph-line { position: absolute; }
+
+  footer.doc-footer { position: running(footer); }
+  .toc { margin: 4mm 0 8mm 0; }
+  .toc a { text-decoration: none; color: #8f4a1e; }
+  .toc-row { border-bottom: 0.2mm dotted #c7c2b4; padding: 1.3mm 0; font-size: 11.5px; }
+  .kbd { font-family: monospace; background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="eyebrow">Firmware-Projekt · Hobby / Privat</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <svg viewBox="0 0 48 48" fill="none" width="32" height="32" style="flex-shrink:0;">
+      <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="#8E97A3" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="24" cy="9" r="5" fill="#E08A4C"/>
+      <circle cx="37.6" cy="32.5" r="5" fill="#7FA0D9"/>
+      <circle cx="10.4" cy="32.5" r="5" fill="#74B7A6"/>
+      <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="#E9E4D8" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="24" cy="24.67" r="2.6" fill="#E9E4D8"/>
+    </svg>
+    <h1>SENSORMETER DISPLAY</h1>
+  </div>
+  <div class="subtitle">Admin-Guide — Inbetriebnahme, Touch-Bedienung und Konfiguration über die Weboberfläche</div>
+  <div class="badges">
+    <span class="badge badge-orange">v0.9.0-rc4 · Beta</span>
+    <span class="badge">HW-458B · ESP32</span>
+    <span class="badge">Touch-UI · Webserver · Branding · OTA</span>
+    <span class="badge">github.com/peterhagelhof7-cmd/sensormeter-display</span>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="toc-row"><a href="#sec1">1. Erste Inbetriebnahme (Auspacken, Anschließen, Flashen)</a></div>
+  <div class="toc-row"><a href="#sec2">2. Erststart am Gerät (Kalibrierung, WLAN)</a></div>
+  <div class="toc-row"><a href="#sec3">3. Statusleisten (oben/unten)</a></div>
+  <div class="toc-row"><a href="#sec4">4. Datenquellen (Screens)</a></div>
+  <div class="toc-row"><a href="#sec5">5. Einstellungen-Menü (Touch)</a></div>
+  <div class="toc-row"><a href="#sec6">6. Info-Dialog</a></div>
+  <div class="toc-row"><a href="#sec7">7. Konfiguration über die Weboberfläche</a></div>
+  <div class="toc-row"><a href="#sec8">8. Firmware-Updates</a></div>
+  <div class="toc-row"><a href="#sec9">9. Serial-Kommandozeile (USB)</a></div>
+  <div class="toc-row"><a href="#sec-anhang">Anhang: Troubleshooting</a></div>
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec1"><span class="num">1</span>Erste Inbetriebnahme</h1>
+
+<h2>1.1 Auspacken &amp; Hardware-Übersicht</h2>
+<p>Das Board (HW-458B) besteht aus einem ESP-WROOM-32-Modul mit fest verbautem
+2,8"-TFT-Display (ST7789P3, 240×320, resistiver Touch) auf einer Trägerplatine.
+Im Lieferumfang üblicherweise enthalten:</p>
+<ul>
+  <li>Das Display-Board selbst</li>
+  <li>Ein USB-Kabel (Micro-USB oder USB-C, je nach Revision) zum Programmieren/Stromversorgen</li>
+  <li>Optional: DHT11-Sensor mit Kabel (wird am Erweiterungsanschluss <span class="code">IO2</span> / GPIO22 angeschlossen)</li>
+</ul>
+<div class="callout">
+  <div class="callout-title">Hinweis</div>
+  Vor dem ersten Einschalten das Board auf sichtbare Transportschäden prüfen
+  (insbesondere die Touch-Folie auf dem Display). Das Gerät ist nicht
+  wasserdicht und sollte in trockener Umgebung betrieben werden.
+</div>
+
+<h2>1.2 Anschließen an den Computer</h2>
+<p>Das Board per USB-Kabel mit einem Windows-Rechner verbinden. Windows sollte
+automatisch einen neuen COM-Port erkennen. Falls das Board nicht erkannt
+wird, ist vermutlich der <b>CH340-USB-Seriell-Treiber</b> nicht installiert
+(häufig bei diesen günstigen ESP32-Boards) — der Treiber lässt sich kostenlos
+vom Chip-Hersteller herunterladen und muss einmalig installiert werden.
+Nach der Installation im Geräte-Manager unter „Anschlüsse (COM &amp; LPT)“
+prüfen, ob ein neuer Port (z. B. <span class="code">COM5</span>) erscheint.</p>
+
+<h2>1.3 PowerShell-Skript ausführen</h2>
+<p>Das Skript <span class="code">scripts/flash.ps1</span> übernimmt die
+komplette Einrichtung: es fragt zuerst, welches der drei
+Sensormeter-Projekte geflasht werden soll (dasselbe Skript liegt identisch
+in allen drei Repos), installiert dann fehlende Werkzeuge (Python, Git,
+PlatformIO), holt den Quellcode und baut/flasht die Firmware — ganz ohne
+manuelle Vorbereitung.</p>
+<h3>Vorgehen</h3>
+<ol>
+  <li>PowerShell öffnen (Start-Menü → „PowerShell“ eintippen)</li>
+  <li>In das gewünschte Zielverzeichnis wechseln oder das Skript direkt aus
+      einem bereits vorhandenen Checkout heraus starten</li>
+  <li>Skript ausführen und bei der Projektabfrage <b>3</b> (Sensormeter
+      Display) wählen, oder direkt mit <span class="code">-Project
+      display</span> aufrufen:</li>
+</ol>
+<pre class="code-block">.\flash.ps1 -Project display</pre>
+<p>Das Skript prüft nacheinander, ob Python, Git und PlatformIO vorhanden und
+tatsächlich funktionsfähig sind (nicht nur, ob ein Befehl mit diesem Namen
+existiert — Windows legt z. B. einen „python“-Store-Alias an, der keine
+echte Installation ist) und installiert bei Bedarf automatisch nach
+(über <span class="code">winget</span>/<span class="code">pip</span>). Danach
+wird das Repository geklont (oder aktualisiert, falls schon vorhanden) und
+die Firmware gebaut.</p>
+
+<h3>Nützliche Parameter</h3>
+<table>
+  <tr><th>Parameter</th><th>Wirkung</th></tr>
+  <tr><td><span class="code">-Project display</span></td><td>Projekt direkt angeben, ohne die interaktive Abfrage (alternativ <span class="code">sensormeter</span> oder <span class="code">wlan</span>)</td></tr>
+  <tr><td><span class="code">-RepoPath &lt;Pfad&gt;</span></td><td>Zielordner für den Checkout (Default: Ordner „sensormeter-display“ neben dem Skript)</td></tr>
+  <tr><td><span class="code">-Port COM5</span></td><td>Seriellen Port fest vorgeben, falls die automatische Erkennung fehlschlägt oder mehrere Boards angeschlossen sind</td></tr>
+  <tr><td><span class="code">-SkipUpload</span></td><td>Nur bauen, nicht flashen — z. B. um vorab zu prüfen, ob alles kompiliert, ohne dass ein Board angeschlossen sein muss</td></tr>
+</table>
+<pre class="code-block">.\flash.ps1 -Project display -Port COM5
+.\flash.ps1 -Project display -RepoPath C:\Projekte\sensormeter-display -SkipUpload</pre>
+
+<h2>1.4 Flashen</h2>
+<p>Ohne <span class="code">-SkipUpload</span> schließt das Skript direkt mit
+dem eigentlichen Flash-Vorgang ab (<span class="code">pio run --target
+upload</span>). Das Skript listet vorab alle erkannten seriellen Ports auf
+Windows-Text-Ausgabe. Bei Erfolg erscheint:</p>
+<pre class="code-block">Fertig! Firmware erfolgreich geflasht.
+Beim ersten Start: Touch-Kalibrierung durchfuehren, dann WLAN einrichten (siehe README.md).</pre>
+<div class="callout warn">
+  <div class="callout-title">Bei Fehlschlag</div>
+  Häufigste Ursachen: CH340-Treiber fehlt, falscher COM-Port (Liste oben
+  prüfen, ggf. mit <span class="code">-Port COM&lt;n&gt;</span> erneut
+  versuchen), oder das Board ist nicht angeschlossen/im falschen Modus.
+  Bei manchen Boards muss während des Flashens eine BOOT-Taste gehalten
+  werden — bei HW-458B in der Regel nicht nötig.
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec2"><span class="num">2</span>Erststart am Gerät</h1>
+
+<p>Nach dem ersten Flashen durchläuft das Gerät automatisch zwei
+Einrichtungsschritte, bevor der Normalbetrieb beginnt: Touch-Kalibrierung
+und WLAN-Einrichtung. Beide Schritte laufen nur einmal — die Ergebnisse
+werden im Flash-Speicher (NVS) gespeichert und bei jedem weiteren Start
+automatisch geladen.</p>
+
+<h2>2.1 Touch-Kalibrierung</h2>
+<p>Das Gerät zeigt nacheinander vier Bildschirme mit je einem roten
+Fadenkreuz in einer Ecke. Jede Ecke <b>antippen und kurz halten</b> (nicht
+nur kurz antippen — der Sensor braucht eine kurze Setzzeit, um einen
+stabilen Messwert zu bekommen).</p>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Kalibrierung: oben-links antippen und halten</div>
+    <div class="sk-crosshair" style="left:8mm; top:6mm;"></div>
+  </div></div>
+  <div class="sketch-notes">
+    <p><b>Reihenfolge:</b> oben-links → oben-rechts → unten-links →
+    unten-rechts.</p>
+    <ul>
+      <li>Ziele liegen bewusst etwas von den echten Bildschirmkanten
+      entfernt (besser treffbar)</li>
+      <li>Nach allen vier Punkten: „Kalibrierung gespeichert.“</li>
+      <li>Danach direkt weiter zur WLAN-Einrichtung</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2.2 WLAN-Ersteinrichtung</h2>
+<p>Das Gerät scannt automatisch nach WLAN-Netzen und zeigt eine Liste,
+sortiert nach Empfangsstärke.</p>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">WLAN waehlen</div>
+    <div style="position:absolute; top:1mm; right:1mm; border:0.25mm solid #333; font-size:2.6mm; padding:0.5mm 1.5mm;">Aktualisieren</div>
+    <div class="sk-menu-row" style="position:absolute; top:9mm; height:5mm; left:2mm; right:2mm; text-align:left; display:flex; justify-content:space-between;"><span>Heimnetz_5G</span><span>▮▮▮</span></div>
+    <div class="sk-menu-row" style="position:absolute; top:16mm; height:5mm; left:2mm; right:2mm; text-align:left; display:flex; justify-content:space-between;"><span>Nachbar-WLAN</span><span>▮▮</span></div>
+    <div class="sk-menu-row" style="position:absolute; top:23mm; height:5mm; left:2mm; right:2mm; text-align:left; display:flex; justify-content:space-between;"><span>Gast (offen)</span><span>▮</span></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li><b>Aktualisieren</b> (oben rechts) startet einen neuen Scan</li>
+      <li>Netzwerk in der Liste antippen, um es auszuwählen</li>
+      <li>Bei offenen Netzen (kein Passwortschutz) steht „(offen)“ hinter
+      dem Namen</li>
+      <li>Bis zu 6 Netze werden angezeigt (nach Signalstärke sortiert,
+      Duplikate zusammengefasst) — kein Scrollen</li>
+    </ul>
+  </div>
+</div>
+
+<p>Nach der Auswahl erscheint eine Bildschirmtastatur zur PSK-Eingabe:</p>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div style="position:absolute; top:0.5mm; left:1mm; font-size:2.6mm;">Netzwerk: Heimnetz_5G</div>
+    <div style="position:absolute; top:4mm; left:1mm; right:12mm; height:5mm; border:0.25mm solid #333; font-size:2.8mm; padding:0.5mm;">MeinPasswort12</div>
+    <div style="position:absolute; top:4mm; right:1mm; width:10mm; height:5mm; border:0.25mm solid #333; font-size:2.2mm; display:flex; align-items:center; justify-content:center;">Abbrechen</div>
+    <div class="sk-kbrow" style="top:11mm;">
+      <div class="sk-key" style="flex:1; height:6mm;">1</div><div class="sk-key" style="flex:1; height:6mm;">2</div><div class="sk-key" style="flex:1; height:6mm;">3</div><div class="sk-key" style="flex:1; height:6mm;">4</div><div class="sk-key" style="flex:1; height:6mm;">5</div><div class="sk-key" style="flex:1; height:6mm;">6</div><div class="sk-key" style="flex:1; height:6mm;">7</div><div class="sk-key" style="flex:1; height:6mm;">8</div><div class="sk-key" style="flex:1; height:6mm;">9</div><div class="sk-key" style="flex:1; height:6mm;">0</div><div class="sk-key" style="flex:2; height:6mm;">&lt;-</div>
+    </div>
+    <div class="sk-kbrow" style="top:17mm;">
+      <div class="sk-key" style="flex:1; height:6mm;">q</div><div class="sk-key" style="flex:1; height:6mm;">w</div><div class="sk-key" style="flex:1; height:6mm;">e</div><div class="sk-key" style="flex:1; height:6mm;">r</div><div class="sk-key" style="flex:1; height:6mm;">t</div><div class="sk-key" style="flex:1; height:6mm;">z</div><div class="sk-key" style="flex:1; height:6mm;">u</div><div class="sk-key" style="flex:1; height:6mm;">i</div><div class="sk-key" style="flex:1; height:6mm;">o</div><div class="sk-key" style="flex:1; height:6mm;">p</div>
+    </div>
+    <div class="sk-kbrow" style="top:23mm;">
+      <div class="sk-key" style="flex:2; height:6mm;">CAPS</div><div class="sk-key" style="flex:1; height:6mm;">a</div><div class="sk-key" style="flex:1; height:6mm;">s</div><div class="sk-key" style="flex:1; height:6mm;">d</div><div class="sk-key" style="flex:1; height:6mm;">f</div><div class="sk-key" style="flex:1; height:6mm;">g</div><div class="sk-key" style="flex:1; height:6mm;">h</div><div class="sk-key" style="flex:1; height:6mm;">j</div><div class="sk-key" style="flex:1; height:6mm;">k</div><div class="sk-key" style="flex:2; height:6mm;">OK</div>
+    </div>
+    <div class="sk-kbrow" style="top:29mm;">
+      <div class="sk-key" style="flex:2; height:6mm;">SYM</div><div class="sk-key" style="flex:1; height:6mm;">y</div><div class="sk-key" style="flex:1; height:6mm;">x</div><div class="sk-key" style="flex:1; height:6mm;">c</div><div class="sk-key" style="flex:1; height:6mm;">v</div><div class="sk-key" style="flex:1; height:6mm;">b</div><div class="sk-key" style="flex:1; height:6mm;">n</div><div class="sk-key" style="flex:4; height:6mm;">LEER</div>
+    </div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Eingabe erscheint <b>im Klartext</b> (nicht maskiert) — bewusste
+      Entscheidung für einfache Kontrolle ohne physische Tastatur</li>
+      <li><b>CAPS</b> schaltet Groß-/Kleinschreibung um, <b>SYM</b>/<b>ABC</b>
+      wechselt zwischen Buchstaben und Sonderzeichen</li>
+      <li><b>OK</b> bestätigt, <b>Abbrechen</b> springt zur Netzliste zurück</li>
+      <li>Bei erfolgreicher Verbindung wird das Netz dauerhaft gespeichert
+      und künftig automatisch verwendet</li>
+      <li>Bei Fehlschlag: kurze Meldung, dann zurück zur (bereits
+      gescannten) Netzliste</li>
+    </ul>
+  </div>
+</div>
+<p>Über <b>Systemeinstellungen → WLAN neu wählen</b> (Abschnitt 5.4) lässt
+sich dieser Ablauf jederzeit wiederholen, um ein anderes Netz zu verbinden.</p>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec3"><span class="num">3</span>Statusleisten</h1>
+<p>Im Normalbetrieb sind zwei schmale Leisten permanent sichtbar (je 36 px
+von 320 px Bildschirmlänge = 11,25 % je Kante), dazwischen der
+Inhaltsbereich der aktiven Datenquelle.</p>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top">
+      <div class="sk-icon gear"></div>
+      <div class="sk-icon info"></div>
+      <div class="sk-bars"><span style="height:1.5mm;"></span><span style="height:2.2mm;"></span><span style="height:3mm;"></span></div>
+      <div class="sk-dht">22C&nbsp;&nbsp;48%</div>
+    </div>
+    <div class="sk-content"><div class="sk-label">(aktive Datenquelle)</div></div>
+    <div class="sk-bar bottom">
+      <div style="font-size:4mm; font-weight:700;">14:32</div>
+      <div style="font-size:2.6mm;">Mo 08.07.2026</div>
+    </div>
+  </div></div>
+  <div class="sketch-notes">
+    <p><b>Obere Leiste:</b></p>
+    <ul>
+      <li><b>Zahnrad</b> (antippbar) — öffnet das Einstellungen-Menü (Abschnitt 5)</li>
+      <li><b>i-Symbol</b> (antippbar) — öffnet den Geräte-Info-Dialog (Abschnitt 6)</li>
+      <li><b>WLAN-Balken</b> (0–3, nach Empfangsstärke) — blinkt, wenn kein
+      WLAN verbunden ist</li>
+      <li><b>DHT11-Werte</b> (Temperatur/Feuchte des internen Sensors),
+      rechtsbündig</li>
+    </ul>
+    <p><b>Untere Leiste:</b> Uhrzeit (groß) und Wochentag/Datum. Entfällt,
+    wenn im Static-Modus die Datenquelle „Uhrzeit“ gewählt ist (die Ansicht
+    nutzt den Platz dann selbst).</p>
+    <p>Bei anhaltendem Ping-Ausfall (&gt;1 Minute) wechselt der gesamte
+    Bildschirmhintergrund auf Rot, zusätzlich blinkt die RGB-Status-LED rot.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec4"><span class="num">4</span>Datenquellen (Screens)</h1>
+<p>Sechs Datenquellen stehen zur Auswahl (Slide-Modus wechselt automatisch
+zwischen allen, Static-Modus zeigt dauerhaft eine feste Quelle — siehe
+Abschnitt 5).</p>
+
+<h2>4.1 DHT11 (intern)</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div style="position:absolute; top:15%; left:0; width:100%; height:33%; display:flex; align-items:center; justify-content:center; gap:6mm;">
+      <div style="text-align:center;"><div class="sk-big">22°</div><div class="sk-label">Temperatur</div></div>
+      <div style="text-align:center;"><div class="sk-big">48%</div><div class="sk-label">Feuchte</div></div>
+    </div>
+    <svg style="position:absolute; top:48%; left:5%; width:90%; height:35%;" viewBox="0 0 100 40">
+      <polyline points="0,20 15,18 30,22 45,15 60,17 75,10 90,12 100,8" fill="none" stroke="#c0392b" stroke-width="1.5"/>
+      <polyline points="0,30 15,32 30,28 45,33 60,29 75,34 90,30 100,32" fill="none" stroke="#2e6da4" stroke-width="1.5"/>
+    </svg>
+    <div class="sk-bar bottom"><div style="font-size:4mm; font-weight:700;">14:32</div><div style="font-size:2.6mm;">Mo 08.07.2026</div></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Oberes Drittel: aktueller Wert (°C und %)</li>
+      <li>Unten: 12h-Verlaufsgraph, Messpunkt alle 30 Minuten (24
+      Messpunkte) — <span style="color:#c0392b;">Temperatur rot</span>,
+      <span style="color:#2e6da4;">Feuchte blau</span>, mit Min/Max-Achsenbeschriftung</li>
+      <li>Verlauf wird als CSV im Flash gespeichert und nach jedem Neustart
+      geladen</li>
+      <li>DHT11 wird alle 5 Sekunden abgefragt</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.2 Uhrzeit</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div class="sk-content"><div style="font-size:9mm; font-weight:700;">14:32</div><div class="sk-label">Montag, 08.07.2026</div></div>
+    <div class="sk-bar bottom"><div style="font-size:4mm; font-weight:700;">14:32</div><div style="font-size:2.6mm;">Mo 08.07.2026</div></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Zeitquelle: NTP (<span class="code">de.pool.ntp.org</span>),
+      deutsche Zeitzone inkl. Sommerzeit</li>
+      <li>24-Stunden-Format HH:MM, Wochentag auf Deutsch</li>
+      <li>Im <b>Static-Modus</b> mit dieser Quelle entfällt die untere
+      Statusleiste (die Ansicht übernimmt den Platz selbst und zeigt Uhrzeit
+      größer)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.3 Sensormeter (SNMP)</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div class="sk-content full">
+      <div class="sk-label">Keller (Intern)</div>
+      <div style="display:flex; gap:6mm; align-items:baseline;"><span class="sk-big">18.4°C</span><span class="sk-big">55.2%</span></div>
+    </div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Fragt bis zu 5 konfigurierte Sensormeter-Ziele per SNMP ab (siehe
+      Abschnitt 5.4/7.3 zur Konfiguration)</li>
+      <li>Zeigt Systemname + Sensor-Bezeichnung (z. B. „Intern“/„Extern“ bei
+      Sensormeter-PRO-Geräten mit zwei Sensoren) sowie Temperatur/Feuchte</li>
+      <li>Bei mehreren Zielen/Sensoren rotiert die Anzeige automatisch alle
+      paar Sekunden durch alle erreichbaren Slides</li>
+      <li>Ohne konfiguriertes Ziel: „Kein Sensormeter-Ziel konfiguriert“</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.4 Ping (Durchschnitt)</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div class="sk-content full"><div style="display:flex; align-items:baseline; gap:1.5mm;"><span class="sk-big">23</span><span class="sk-label">ms&nbsp;&nbsp;(google.com)</span></div></div>
+    <div class="sk-bar bottom"><div style="font-size:4mm; font-weight:700;">14:32</div><div style="font-size:2.6mm;">Mo 08.07.2026</div></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Dauerhafter Ping an <span class="code">google.com</span>, Anzeige
+      = Durchschnitt der letzten 5 Antwortzeiten</li>
+      <li>Läuft immer, unabhängig von zusätzlich konfigurierten Zielen</li>
+      <li>Schlägt der Ping länger als 1 Minute fehl: Bildschirm wird
+      bildschirmweit rot, LED blinkt rot (siehe Abschnitt 3)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.5 Ping-Ziele (Liste)</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div style="position:absolute; top:16%; left:2mm; right:2mm; height:78%; display:flex; flex-direction:column; gap:1mm; justify-content:center;">
+      <div class="sk-list-row ok" style="justify-content:center;">192.168.1.10&nbsp;&nbsp;OK</div>
+      <div class="sk-list-row err" style="justify-content:center;">192.168.1.20&nbsp;&nbsp;Fehler</div>
+      <div class="sk-list-row ok" style="justify-content:center;">10.0.0.5&nbsp;&nbsp;OK</div>
+    </div>
+    <div class="sk-bar bottom"><div style="font-size:4mm; font-weight:700;">14:32</div><div style="font-size:2.6mm;">Mo 08.07.2026</div></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Bis zu 5 zusätzliche Ping-Ziele (IP-Adressen), konfigurierbar über
+      Touch oder Web (Abschnitt 5.4/7.3)</li>
+      <li>Je Ziel eine Zeile: IP-Adresse + Status — <span style="color:#1f5c46;">grün „OK“</span>
+      bei Antwort, <span style="color:#a63d2e;">rot „Fehler“</span> bei
+      Ausfall, grau „…“ solange noch kein Ergebnis vorliegt</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.6 Anbieter-Branding</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-bar top"><div class="sk-icon gear"></div><div class="sk-icon info"></div><div class="sk-bars"><span style="height:2mm;"></span><span style="height:2.5mm;"></span><span style="height:3mm;"></span></div><div class="sk-dht">22C&nbsp;&nbsp;48%</div></div>
+    <div class="sk-content full"><div class="sk-label" style="font-size:4mm; font-weight:700;">Musterfirma GmbH</div></div>
+    <div class="sk-bar bottom"><div style="font-size:4mm; font-weight:700;">14:32</div><div style="font-size:2.6mm;">Mo 08.07.2026</div></div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Optionale Weisslabel-Kennzeichnung: freier Anbietername und/oder
+      ein Logo-Bild (128×64 Pixel, Farbe), unabhängig vom Systemnamen</li>
+      <li>Zeigt bevorzugt das Logo zentriert; ohne Logo den Anbietername als
+      Textzeile</li>
+      <li>Ohne konfigurierten Namen UND Logo: „Kein Branding konfiguriert“</li>
+      <li>Konfiguration nur über die Weboberfläche (Abschnitt 7.5) — Logo-
+      Upload braucht eine vorkonvertierte Datei, siehe dort</li>
+    </ul>
+  </div>
+</div>
+
+<h2>4.7 Snake (Bonus-Modus)</h2>
+<p>Kein reguläres Slide-Element, sondern über das Einstellungen-Menü
+aufrufbar (Abschnitt 5.1). Steuerung per Touch: oberes Bildschirmdrittel =
+hoch, unteres = runter, linkes = links, rechtes = rechts. Bei Spielende
+werden die erreichten Punkte kurz eingeblendet, danach geht es automatisch
+zurück zum Einstellungen-Menü.</p>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec5"><span class="num">5</span>Einstellungen-Menü (Touch)</h1>
+<p>Das Zahnrad-Symbol in der oberen Statusleiste öffnet das
+Einstellungen-Menü. Jeder Screen hat oben rechts eine <b>X</b>-Schaltfläche
+zum Verlassen/Zurückgehen.</p>
+
+<h2>5.1 Hauptmenü</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Einstellungen</div>
+    <div class="sk-close">X</div>
+    <div class="sk-menu-row" style="position:absolute; top:9mm; height:5mm; left:2mm; right:2mm;">Slide</div>
+    <div class="sk-menu-row" style="position:absolute; top:16mm; height:5mm; left:2mm; right:2mm;">Static</div>
+    <div class="sk-menu-row" style="position:absolute; top:23mm; height:5mm; left:2mm; right:2mm;">Snake</div>
+    <div class="sk-menu-row" style="position:absolute; top:30mm; height:5mm; left:2mm; right:2mm;">Systemeinstellungen</div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li><b>Slide</b> — zyklischer Wechsel aller Datenquellen, Intervall
+      einstellbar</li>
+      <li><b>Static</b> — feste Anzeige einer gewählten Datenquelle</li>
+      <li><b>Snake</b> — startet das Bonus-Spiel direkt</li>
+      <li><b>Systemeinstellungen</b> — Helligkeit, WLAN, Sensormeter-Ziele,
+      Ping-Ziele</li>
+    </ul>
+  </div>
+</div>
+
+<h2>5.2 Slide — Intervall wählen</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Slide-Intervall</div>
+    <div class="sk-close">X</div>
+    <div class="sk-adjbtn" style="left:10mm;">-</div>
+    <div style="position:absolute; top:38%; left:0; width:100%; text-align:center; font-size:6mm; font-weight:700;">10s</div>
+    <div class="sk-adjbtn" style="right:10mm;">+</div>
+    <div class="sk-menu-row" style="position:absolute; top:32mm; left:20mm; right:20mm;">Uebernehmen</div>
+  </div></div>
+  <div class="sketch-notes">
+    <p>Wechselintervall zwischen 5 und 60 Sekunden, in 5-Sekunden-Schritten
+    über <b>-</b>/<b>+</b> einstellbar. „Übernehmen“ speichert die
+    Einstellung und aktiviert den Slide-Modus sofort.</p>
+  </div>
+</div>
+
+<h2>5.3 Static — Datenquelle wählen</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Static-Datenquelle</div>
+    <div class="sk-close">X</div>
+    <div class="sk-menu-row" style="position:absolute; top:8mm; height:4.5mm; left:2mm; right:2mm;">DHT11 (intern)</div>
+    <div class="sk-menu-row" style="position:absolute; top:14mm; height:4.5mm; left:2mm; right:2mm;">Uhrzeit</div>
+    <div class="sk-menu-row" style="position:absolute; top:20mm; height:4.5mm; left:2mm; right:2mm;">Sensormeter</div>
+    <div class="sk-menu-row" style="position:absolute; top:26mm; height:4.5mm; left:2mm; right:2mm;">Ping</div>
+    <div class="sk-menu-row" style="position:absolute; top:32mm; height:4.5mm; left:2mm; right:2mm;">Ping-Ziele</div>
+  </div></div>
+  <div class="sketch-notes">
+    <p>Antippen einer Quelle aktiviert sofort den Static-Modus mit dieser
+    festen Anzeige (siehe Abschnitt 4 für die jeweiligen Screens). Der
+    Eintrag „Sensormeter“ rotiert bei mehreren konfigurierten Zielen/Sensoren
+    intern selbstständig durch alle Slides.</p>
+  </div>
+</div>
+
+<h2>5.4 Systemeinstellungen</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Systemeinstellungen</div>
+    <div class="sk-close">X</div>
+    <div style="position:absolute; top:8mm; left:12mm; font-size:2.6mm;">Helligkeit</div>
+    <div class="sk-adjbtn" style="left:10mm; top:13mm;">-</div>
+    <div style="position:absolute; top:15mm; left:0; width:100%; text-align:center; font-size:5mm; font-weight:700;">60%</div>
+    <div class="sk-adjbtn" style="right:10mm; top:13mm;">+</div>
+    <div class="sk-menu-row" style="position:absolute; top:26mm; height:5mm; left:8mm; right:8mm;">WLAN neu waehlen</div>
+    <div class="sk-menu-row" style="position:absolute; top:32mm; height:5mm; left:8mm; right:8mm;">Sensormeter-Ziele (2/5)</div>
+    <div class="sk-menu-row" style="position:absolute; top:38mm; height:5mm; left:8mm; right:8mm;">Ping-Ziele (1/5)</div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li><b>Helligkeit</b> in 5%-Schritten (0–100 %, Default 60 %)</li>
+      <li><b>WLAN neu wählen</b> — startet den WLAN-Einrichtungs-Ablauf aus
+      Abschnitt 2.2 erneut, um ein anderes Netz zu verbinden (überschreibt
+      die gespeicherten Zugangsdaten)</li>
+      <li><b>Sensormeter-Ziele</b> — öffnet die Zielliste (siehe unten)</li>
+      <li><b>Ping-Ziele</b> — öffnet die Zielliste (siehe unten)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>5.5 Sensormeter-Ziele verwalten</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Sensormeter-Ziele</div>
+    <div class="sk-close">X</div>
+    <div style="position:absolute; top:9mm; left:2mm; right:2mm; font-size:2.4mm; color:#555;">Community: public (nur im Webinterface aenderbar)</div>
+    <div class="sk-list-row" style="position:absolute; top:16mm; height:5mm; left:2mm; right:12mm;"><span>192.168.1.50</span><span class="x">X</span></div>
+    <div class="sk-list-row" style="position:absolute; top:22mm; height:5mm; left:2mm; right:12mm;"><span>192.168.1.51</span><span class="x">X</span></div>
+    <div class="sk-menu-row" style="position:absolute; top:28mm; height:5mm; left:2mm; right:2mm;">+ Ziel hinzufuegen</div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li>Bis zu 5 Ziele (IP-Adressen), über das Zifferntastenfeld eingegeben</li>
+      <li>Mindestens ein Ziel bleibt erhalten — das <b>X</b> zum Entfernen
+      erscheint erst ab dem zweiten Ziel</li>
+      <li>Die <b>SNMP-Community</b> gilt für alle Ziele gemeinsam und ist
+      nur über das Webinterface änderbar (Abschnitt 7.3) — hier nur
+      Anzeige</li>
+    </ul>
+  </div>
+</div>
+
+<h2>5.6 Ping-Ziele verwalten</h2>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Ping-Ziele</div>
+    <div class="sk-close">X</div>
+    <div class="sk-list-row" style="position:absolute; top:9mm; height:5mm; left:2mm; right:12mm;"><span>10.0.0.5</span><span class="x">X</span></div>
+    <div class="sk-menu-row" style="position:absolute; top:16mm; height:5mm; left:2mm; right:2mm;">+ Ziel hinzufuegen</div>
+  </div></div>
+  <div class="sketch-notes">
+    <p>Bis zu 5 Ziele, gleiches Bedienmuster wie die Sensormeter-Ziele
+    (Zifferntastenfeld für die IP-Eingabe, <b>X</b> zum Entfernen). Hier darf
+    die Liste auf 0 Einträge reduziert werden (der Google-Ping in Abschnitt
+    4.4 läuft davon unabhängig immer weiter).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec6"><span class="num">6</span>Info-Dialog</h1>
+<p>Das <b>i</b>-Symbol in der oberen Statusleiste öffnet einen reinen
+Informations-Screen — nützlich, um schnell die aktuelle IP-Adresse
+abzulesen (z. B. um das Webinterface aufzurufen).</p>
+<div class="sketch-wrap">
+  <div class="device"><div class="screen">
+    <div class="sk-title">Geraete-Info</div>
+    <div class="sk-close">X</div>
+    <div style="position:absolute; top:10.8mm; left:2mm; font-size:2.4mm; color:#555;">Systemname (im Webinterface aenderbar):</div>
+    <div style="position:absolute; top:14.85mm; left:2mm; font-size:3.6mm; font-weight:700;">Sensormeter Display</div>
+    <div style="position:absolute; top:21.15mm; left:2mm; font-size:2.4mm; color:#555;">IP-Adresse:</div>
+    <div style="position:absolute; top:25.2mm; left:2mm; font-size:3.6mm; font-weight:700;">192.168.1.42</div>
+    <div style="position:absolute; top:31.5mm; left:2mm; font-size:2.4mm; color:#555;">Verbindungsart:</div>
+    <div style="position:absolute; top:35.55mm; left:2mm; font-size:3.6mm; font-weight:700;">DHCP (automatisch)</div>
+    <div style="position:absolute; top:41.85mm; left:2mm; font-size:2.4mm; color:#555;">Firmware:</div>
+    <div style="position:absolute; top:45.9mm; left:2mm; font-size:3.6mm; font-weight:700;">0.9.0-rc4</div>
+  </div></div>
+  <div class="sketch-notes">
+    <ul>
+      <li><b>Systemname</b> — nur lesend, änderbar im Webinterface (Abschnitt 7.3)</li>
+      <li><b>IP-Adresse</b> — aktuell vom Gerät verwendete Adresse</li>
+      <li><b>Verbindungsart</b> — „DHCP“ oder „Statisch“, je nach
+      Netzwerk-Konfiguration (Abschnitt 7.4)</li>
+      <li><b>Firmware</b> — aktuell installierte Version (<span class="code">DEVICE_FIRMWARE_VERSION</span>), auch im Webinterface sichtbar (Abschnitt 7.3)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec7"><span class="num">7</span>Konfiguration über die Weboberfläche</h1>
+
+<h2>7.1 Zugriff</h2>
+<ol>
+  <li>IP-Adresse des Geräts ermitteln — am einfachsten über den Info-Dialog
+  (Abschnitt 6) am Gerät selbst</li>
+  <li>Im Browser eines Geräts im selben Netzwerk aufrufen:
+  <span class="code">http://&lt;IP-Adresse&gt;/</span></li>
+  <li>Der Browser fragt nach Benutzername und Passwort (HTTP Basic Auth)</li>
+</ol>
+
+<div class="callout warn">
+  <div class="callout-title">Standard-Zugangsdaten — dringend ändern!</div>
+  <table style="margin:2mm 0;">
+    <tr><th>Benutzername</th><td><span class="code">admin</span> (fest, nicht änderbar)</td></tr>
+    <tr><th>Passwort</th><td><span class="code">admin</span> (Werkseinstellung)</td></tr>
+  </table>
+  Diese Standard-Zugangsdaten sind öffentlich bekannt (Teil des
+  Quellcodes) und schützen <b>nicht</b> vor jemandem, der Zugriff auf das
+  gleiche Netzwerk hat. Bitte das Web-Passwort <b>sofort nach der ersten
+  Anmeldung</b> unter „Allgemein“ (Abschnitt 7.3) ändern.
+</div>
+
+<h2>7.2 Aufbau der Seite</h2>
+<p>Die Startseite zeigt ein zusammenhängendes Formular („Allgemein“ bis
+„Sensormeter (SNMP)“, gemeinsam mit „Speichern“ bestätigt) sowie mehrere
+eigenständige Bereiche mit eigenen Speichern-/Hinzufügen-Buttons
+(Sensormeter-Ziele, Ping-Ziele, Netzwerk, Firmware-Update).</p>
+
+<h2>7.3 Alle Einstellungen im Detail</h2>
+
+<h3>Allgemein</h3>
+<table>
+  <tr><th>Feld</th><th>Bedeutung</th></tr>
+  <tr><td>Systemname</td><td>Freier Anzeigename des Geräts (Titel der Weboberfläche, auch im Info-Dialog am Gerät sichtbar). Default: „Sensormeter Display“.</td></tr>
+  <tr><td>Web-Passwort</td><td>Passwort für den Web-Login (Benutzername immer „admin“). Wird im Formular im Klartext angezeigt — bewusste Design-Entscheidung für ein lokales Konfigurationsgerät (einfache Kontrolle wichtiger als Sichtschutz).</td></tr>
+</table>
+
+<h3>Betriebsmodus</h3>
+<table>
+  <tr><th>Feld</th><th>Bedeutung</th></tr>
+  <tr><td>Slide / Static</td><td>Entspricht der Touch-Auswahl aus Abschnitt 5.1 — hier per Radio-Button wählbar.</td></tr>
+  <tr><td>Slide-Intervall</td><td>5–60 Sekunden (Schrittweite 5), nur bei Modus „Slide“ relevant.</td></tr>
+  <tr><td>Datenquelle</td><td>Dropdown mit allen 6 Datenquellen, nur bei Modus „Static“ relevant.</td></tr>
+</table>
+
+<h3>Helligkeit</h3>
+<p>0–100 %, identisch zur Touch-Einstellung (Abschnitt 5.4).</p>
+
+<h3>Anbieter-Branding</h3>
+<table>
+  <tr><th>Feld</th><th>Bedeutung</th></tr>
+  <tr><td>Anbietername</td><td>Erscheint zusätzlich zum Systemnamen auf der Datenquelle „Branding“ (Abschnitt 4.6) und im Kopfbereich von Dashboard und Einstellungsseite, sobald Name und/oder Logo gesetzt sind.</td></tr>
+</table>
+<p class="hint">Logo-Upload/-Löschen ist ein eigener Bereich, siehe Abschnitt 7.5.</p>
+
+<h3>Sensormeter (SNMP)</h3>
+<table>
+  <tr><th>Feld</th><th>Bedeutung</th></tr>
+  <tr><td>Community</td><td>SNMP-Community-String, gilt gemeinsam für <b>alle</b> konfigurierten Sensormeter-Ziele. Default: „public“.</td></tr>
+</table>
+
+<h3>Sensormeter-Ziele</h3>
+<p>Eigener Bereich mit Liste (max. 5, mind. 1). Jede Zeile hat einen
+„Entfernen“-Button (ab dem zweiten Eintrag), darunter ein Feld „Neues Ziel
+(IP-Adresse)“ mit „Hinzufügen“-Button.</p>
+
+<h3>Ping-Ziele</h3>
+<p>Gleiches Bedienmuster wie Sensormeter-Ziele, max. 5, darf auf 0 reduziert
+werden.</p>
+
+<h3>Netzwerk</h3>
+<table>
+  <tr><th>Feld</th><th>Bedeutung</th></tr>
+  <tr><td>Aktuelle IP</td><td>Nur-Anzeige, inkl. aktueller Verbindungsart (DHCP/statisch).</td></tr>
+  <tr><td>Automatisch (DHCP) / Statisch</td><td>Radio-Button zur Wahl der IP-Vergabe.</td></tr>
+  <tr><td>IP-Adresse / Gateway / Subnetzmaske</td><td>Nur bei „Statisch“ relevant.</td></tr>
+</table>
+<p>Vor dem Übernehmen wird die gewählte Einstellung geprüft, statt sie
+blind zu speichern: bei „Statisch“ per Ping (die Adresse darf nicht
+bereits von einem anderen Gerät im Netz beantwortet werden), bei
+„Automatisch (DHCP)“ durch einen echten Verbindungsversuch auf der
+bestehenden Verbindung (bis zu 8 Sekunden Wartezeit, nur bei
+tatsächlich erhaltener Lease gilt der Test als erfolgreich). Nur bei
+erfolgreicher Prüfung werden die Netzwerkfelder gespeichert und das
+Gerät neu gestartet — schlägt die Prüfung fehl, bleibt die zuletzt
+funktionierende Konfiguration unverändert aktiv und es gibt <b>keinen</b>
+Neustart.</p>
+<div class="callout">
+  <div class="callout-title">Wichtig</div>
+  Nach erfolgreicher Prüfung löst das Speichern der Netzwerkeinstellungen
+  einen <b>sofortigen Neustart</b> des Geräts aus, da eine neue IP-
+  Konfiguration erst bei der nächsten WLAN-Verbindung wirksam wird. Bei
+  falscher statischer IP (die z. B. beim Ping-Check nicht als belegt
+  erkannt wurde) ist das Gerät danach ggf. nicht mehr über die alte
+  Adresse erreichbar — die neue IP lässt sich am Gerät selbst über den
+  Info-Dialog (Abschnitt 6) ablesen.
+</div>
+<div class="callout warn">
+  <div class="callout-title">DHCP-Test schlägt fehl</div>
+  Meldung „Kein DHCP-Server im Netz gefunden“: entweder ist im Zielnetz
+  kein DHCP-Server aktiv, oder das Gerät ist gerade nicht richtig
+  assoziiert. Die zuvor aktive Konfiguration bleibt unverändert bestehen
+  — bei Bedarf stattdessen eine statische IP eintragen, oder den
+  DHCP-Server im Router prüfen.
+</div>
+
+<h3>Firmware-Update</h3>
+<p>Siehe Abschnitt 8.</p>
+
+<h3>Werksreset</h3>
+<p>Ein Auswahlmenü legt fest, welcher Umfang zurückgesetzt wird, bevor der
+Button „Werksreset durchführen" ausgelöst wird (Bestätigungsdialog nennt
+den gewählten Umfang noch einmal):</p>
+<div class="keep">
+<table>
+  <tr><th>Umfang</th><th>Wirkung</th></tr>
+  <tr><td>Alles</td><td>Setzt Systemname, Web-Passwort, Betriebsmodus, Sensormeter-/Ping-Ziele samt Schwellwerten und DHT11-Kalibrierung auf Werkswerte zurück, löscht die gespeicherten WLAN-Zugangsdaten (Gerät startet danach im Onboarding, Abschnitt 2.2), löscht den 12h-Verlauf <b>und</b> das Anbieter-Logo. Nicht rückgängig zu machen.</td></tr>
+  <tr><td>Nur Konfiguration</td><td>Wie oben (inkl. WLAN-Zugangsdaten), aber ohne den 12h-Verlauf und ohne Branding zu löschen — der Anbietername bleibt erhalten, das Logo ebenfalls.</td></tr>
+  <tr><td>Nur Messwerte</td><td>Löscht ausschließlich den 12h-DHT11-Verlauf. Konfiguration, WLAN und Branding bleiben vollständig unangetastet.</td></tr>
+  <tr><td>Nur Anbieter-Branding</td><td>Setzt nur den Anbietername zurück und entfernt ein hinterlegtes Logo (identisch zum Logo-Löschen-Button, Abschnitt 7.5). Alle übrigen Einstellungen bleiben unangetastet.</td></tr>
+</table>
+<p style="font-size:11px; color:#6b6559;">Die Touch-Kalibrierung (Abschnitt
+2.1) ist von <b>keinem</b> Umfang betroffen — sie ist eine physische
+Geräte-/Bildschirmkalibrierung, kein Konfigurationswert. Zum erneuten
+Kalibrieren siehe Anhang, „Touch reagiert ungenau".</p>
+<p style="font-size:11px; color:#6b6559;">Anders als bei den drei
+OLED-Geschwisterprojekten gibt es hier <b>kein</b> XML-Konfigurationsdokument
+(Einstellungen liegen einzeln in NVS/Preferences) — daher auch kein
+Wiederherstellen aus einer zuvor heruntergeladenen Sicherung, nur der reine
+Reset. Bei fehlendem Netzwerkzugriff lässt sich derselbe Werksreset auch
+per USB über die Serial-Kommandozeile auslösen (Abschnitt 9, Kommandos
+<span class="code">reset</span>/<span class="code">reset all</span>, dort
+ohne die granulare Umfangsauswahl der Weboberfläche).</p>
+</div>
+
+<h2>7.4 Live-Status-Dashboard (öffentlich, ohne Login)</h2>
+<p>Die Startseite <span class="code">http://&lt;IP-Adresse&gt;/</span>
+selbst ist bewusst <b>nicht</b> passwortgeschützt (im Unterschied zur
+Einstellungsseite) — ein reines Anzeige-Dashboard für den schnellen
+Blick vom Handy/Laptop im selben Netzwerk, aktualisiert sich automatisch
+alle 30 Sekunden. Zeigt:</p>
+<ul>
+  <li>Internen DHT11-Sensor (Temperatur/Feuchte, Zeitpunkt der letzten
+  Messung, Verlaufsgraph)</li>
+  <li>WLAN-Status (Signal, IP-Adresse)</li>
+  <li>Alle konfigurierten Sensormeter-Ziele und Ping-Ziele mit aktuellem
+  Zustand</li>
+  <li>Eine rote (bzw. bei Unterschreitung blaue) Warnleiste, sobald ein
+  Warnschwellwert verletzt ist oder ein Ping-Ziel seit über einer Minute
+  ausfällt — derselbe Alarm-Mechanismus wie der Bildschirm-Rotalarm am
+  Gerät selbst (Abschnitt 3)</li>
+</ul>
+<p>Über den Button „Einstellungen“ oben rechts geht es zur
+passwortgeschützten Konfigurationsseite (Abschnitt 7.1).</p>
+
+<h2>7.5 Anbieter-Branding (Weisslabel)</h2>
+<p>Eigener Bereich „Branding-Logo“ auf der Einstellungsseite, unterhalb
+des Haupt-„Speichern“-Buttons (eigenes Formular, wie der Firmware-Upload
+in Abschnitt 8). Ist ein Logo hinterlegt, erscheint es zusätzlich klein
+im Kopfbereich von Dashboard <b>und</b> Einstellungsseite.</p>
+<table>
+  <tr><th>Feld/Button</th><th>Bedeutung</th></tr>
+  <tr><td>Logo hochladen</td><td>Erwartet eine vorkonvertierte Rohdatei: 128×64 Pixel, RGB565 (2 Byte/Pixel), genau 16.384 Byte (kein PNG/JPEG) — erzeugbar mit <span class="code">scripts/convert-logo.ps1 -Display display</span>.</td></tr>
+  <tr><td>Logo entfernen</td><td>Nur sichtbar, wenn aktuell ein Logo hinterlegt ist.</td></tr>
+</table>
+<div class="callout warn">
+  <div class="callout-title">Farbkanal-Vorbehalt — nicht auf echter Hardware verifiziert</div>
+  Dieses Panel läuft mit einer nicht ganz spezifikationsgemäßen BGR-Farbeinstellung
+  (an anderer Stelle dieser Firmware mussten deshalb bereits einzelne
+  Farbnamen getauscht werden, siehe <span class="code">docs/entscheidungen.md</span>).
+  Erscheint ein hochgeladenes Logo auf dem Gerät sichtbar falschfarbig
+  (Rot/Blau vertauscht), das Logo erneut mit
+  <span class="code">scripts/convert-logo.ps1 -Display display -SwapRedBlue</span>
+  konvertieren und neu hochladen.
+</div>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec8"><span class="num">8</span>Firmware-Updates</h1>
+<p>Zwei Wege, eine neue Firmware-Version einzuspielen:</p>
+<h2>8.1 Lokales OTA-Update über das Webinterface</h2>
+<p>Der Bereich „Firmware-Update“ zeigt zuerst die aktuell installierte
+Version (<span class="code">Aktuell installiert: 0.9.0-rc4</span>) — auch
+im Info-Dialog am Gerät sichtbar (Abschnitt 6).</p>
+<ol>
+  <li>Neue <span class="code">.bin</span>-Datei besorgen (z. B. von den
+  GitHub-Releases, verlinkt unten auf der Webseite)</li>
+  <li>Im Bereich „Firmware-Update“ die Datei auswählen und „.bin
+  hochladen“ klicken</li>
+  <li>Nach erfolgreichem Upload startet das Gerät automatisch neu</li>
+</ol>
+<h2>8.2 Erneutes Ausführen des PowerShell-Skripts</h2>
+<p>Alternativ das Skript aus Abschnitt 1.3 im vorhandenen Checkout erneut
+ausführen — es aktualisiert den Quellcode (<span class="code">git
+pull</span>, sofern keine lokalen Änderungen vorliegen) und flasht per
+USB-Kabel neu.</p>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec9"><span class="num">9</span>Serial-Kommandozeile (USB)</h1>
+<p>Zusätzlich zur Weboberfläche lässt sich das Gerät direkt über die
+USB-Verbindung steuern — ohne Netzwerkzugriff, ohne Passwort. Praktisch,
+wenn das Gerät nur per USB, aber nicht per Netzwerk erreichbar ist (z. B.
+falsche WLAN-Zugangsdaten, statische IP in einem fremden Netzsegment).
+Baudrate 115200, jede Zeile mit Enter abschließen.</p>
+
+<div class="callout">
+  <div class="callout-title">Gleiches Vertrauensmodell wie bei den Geschwisterprojekten</div>
+  Wer das Gerät per USB-Kabel anschließen kann, gilt als vertrauenswürdig —
+  kein Passwort nötig. Alle Kommandos außer <span class="code">reset</span>/<span class="code">reset all</span>
+  sind nicht destruktiv.
+</div>
+
+<h2>9.1 Kommandoübersicht</h2>
+<p>Anders als bei Sensormeter/Sensormeter WLAN/Sensormeter PoE gibt es hier
+kein <span class="code">dump</span>/<span class="code">upload</span> — die
+Einstellungen liegen einzeln in NVS/Preferences statt in einem
+XML-Konfigurationsdokument, siehe Abschnitt 7.3 „Werksreset".</p>
+<table>
+  <tr><th>Kommando</th><th>Wirkung</th></tr>
+  <tr><td><span class="code">status</span></td><td>Aktuellen Zustand ausgeben (WLAN-Status, IP, Signal, DHT11-Messwert, freier Heap, Laufzeit) — rein lesend, kein Neustart</td></tr>
+  <tr><td><span class="code">dhcp</span></td><td>WLAN auf DHCP umstellen, statische IP/Maske/Gateway löschen, Gerät startet neu</td></tr>
+  <tr><td><span class="code">ip &lt;adresse&gt; &lt;maske&gt; &lt;gateway&gt;</span></td><td>Statische IP setzen, Gerät startet neu. Anders als die Einstellungsseite ohne Ping-Kollisionsprüfung — bewusst einfach gehalten. Kein DNS-Feld (WlanManager kennt keine separate DNS-Konfiguration)</td></tr>
+  <tr><td><span class="code">wifi &lt;ssid&gt; &lt;passwort&gt;</span></td><td>Neue WLAN-Zugangsdaten setzen, Gerät startet neu und verbindet sich damit (wie das Onboarding, Abschnitt 2.2)</td></tr>
+  <tr><td><span class="code">reset</span></td><td>Werksreset nur der Konfiguration (wie Umfang „Nur Konfiguration" auf der Einstellungsseite, inkl. WLAN-Zugangsdaten, allerdings ohne dessen Branding-Erhalt — der Anbietername wird mit zurückgesetzt), Gerät startet neu — der 12h-Verlauf bleibt erhalten</td></tr>
+  <tr><td><span class="code">reset all</span></td><td>Wie oben, zusätzlich werden der 12h-Verlauf und das Anbieter-Logo gelöscht. Nicht rückgängig zu machen</td></tr>
+</table>
+<p class="hint">Die Touch-Kalibrierung ist von keinem der beiden
+Reset-Kommandos betroffen (physische Geräte-/Bildschirmkalibrierung, kein
+Konfigurationswert) — siehe Abschnitt 7.3.</p>
+
+<h2>9.2 Nutzung mit Windows-Boardmitteln (ohne Zusatzsoftware)</h2>
+<p>Für einen seriellen Terminal wird üblicherweise ein Zusatzprogramm wie
+PuTTY oder Tera Term verwendet — beides funktioniert, ist aber nicht
+vorinstalliert. Windows bringt mit der <span class="code">.NET</span>-Klasse
+<span class="code">System.IO.Ports.SerialPort</span> bereits alles Nötige
+mit; PowerShell (ab Windows 7 vorinstalliert) reicht für eine vollständige
+interaktive Sitzung, ganz ohne Download.</p>
+
+<h3>COM-Port ermitteln</h3>
+<p>Geräte-Manager öffnen (<span class="code">Win+X</span> →
+Geräte-Manager) → „Anschlüsse (COM &amp; LPT)" — der Port erscheint dort
+als „USB-SERIAL CH340 (COM&lt;n&gt;)" o. ä. (siehe auch Abschnitt 1.2).
+Alternativ per PowerShell auflisten:</p>
+<pre class="code-block">[System.IO.Ports.SerialPort]::GetPortNames()</pre>
+
+<h3>Interaktive Sitzung (empfohlen)</h3>
+<p>Folgendes Skript als <span class="code">.ps1</span>-Datei speichern
+(<span class="code">COM5</span> durch den tatsächlichen Port ersetzen) und
+mit <span class="code">powershell -ExecutionPolicy Bypass -File
+.\seriell.ps1</span> ausführen, oder direkt zeilenweise in ein
+PowerShell-Fenster einfügen:</p>
+<pre class="code-block">$port = New-Object System.IO.Ports.SerialPort "COM5", 115200, "None", 8, "One"
+$port.NewLine = "`n"
+$port.Open()
+Write-Host "Verbunden mit $($port.PortName). Kommando eingeben und Enter druecken."
+Write-Host "Zum Beenden 'exit' eingeben."
+while ($true) {
+    Start-Sleep -Milliseconds 200
+    while ($port.BytesToRead -gt 0) {
+        try { Write-Host $port.ReadLine() } catch {}
+    }
+    $cmd = Read-Host
+    if ($cmd -eq "exit") { break }
+    $port.WriteLine($cmd)
+}
+$port.Close()</pre>
+<p>Das Skript öffnet den Port, gibt eingehende Zeilen laufend aus und
+sendet jede Eingabe als eigenes Kommando — genau wie ein grafisches
+Terminalprogramm, nur ganz ohne Installation.</p>
+
+<h3>Einzelnes Kommando (Kurzform)</h3>
+<p>Für einen schnellen einmaligen Aufruf, z. B. nur den Status abfragen,
+genügt auch ein Einzeiler ohne Schleife:</p>
+<pre class="code-block">$port = New-Object System.IO.Ports.SerialPort "COM5", 115200
+$port.Open(); Start-Sleep -Seconds 6   # Boot-Log abwarten
+$port.DiscardInBuffer()
+$port.WriteLine("status")
+Start-Sleep -Milliseconds 500
+$port.ReadExisting()
+$port.Close()</pre>
+
+<!-- ============================================================ -->
+<h1 class="section" id="sec-anhang">Anhang — Troubleshooting</h1>
+<table>
+  <tr><th>Problem</th><th>Mögliche Ursache / Lösung</th></tr>
+  <tr><td>Board wird von Windows nicht erkannt</td><td>CH340-USB-Treiber fehlt — installieren, danach Geräte-Manager prüfen</td></tr>
+  <tr><td>Flash-Vorgang schlägt fehl</td><td>Falscher COM-Port (<span class="code">-Port COM&lt;n&gt;</span> angeben), Board nicht angeschlossen, oder anderes Programm blockiert den seriellen Port (z. B. offener serieller Monitor)</td></tr>
+  <tr><td>Touch reagiert ungenau</td><td>Kalibrierung über einen Werksreset (kompletter Flash-Löschvorgang) erneut auslösen, dann beim Kalibrieren jede Ecke wirklich <b>halten</b>, nicht nur antippen</td></tr>
+  <tr><td>WLAN-Symbol blinkt dauerhaft</td><td>Kein WLAN verbunden — über Systemeinstellungen → WLAN neu wählen erneut einrichten</td></tr>
+  <tr><td>Bildschirm bleibt komplett rot</td><td>Ping zu google.com schlägt seit über 1 Minute fehl — Internetverbindung/Router prüfen</td></tr>
+  <tr><td>Webinterface nicht erreichbar</td><td>IP-Adresse über den Info-Dialog am Gerät prüfen; bei kürzlich geänderter Static-IP ggf. neue Adresse verwenden</td></tr>
+  <tr><td>Web-Login schlägt fehl / Gerät im Netzwerk gar nicht erreichbar</td><td>Benutzername immer „admin“; Passwort wurde ggf. bereits geändert (siehe Abschnitt 7.1) — bei Passwortverlust hilft ein Werksreset mit Umfang „Nur Konfiguration“ oder „Alles“ auf der Einstellungsseite (Abschnitt 7.3), oder per USB das <span class="code">reset</span>-Kommando über die Serial-Kommandozeile (Abschnitt 9)</td></tr>
+  <tr><td>Neue Netzwerkeinstellungen werden abgelehnt</td><td>Bei „Statisch“: ein anderes Gerät im Netz antwortet bereits unter dieser Adresse (Abschnitt 7.4) — andere, freie Adresse wählen. Bei „Automatisch (DHCP)“: kein DHCP-Server im Netz gefunden — Router prüfen oder stattdessen eine statische IP eintragen</td></tr>
+</table>
+
+<p style="margin-top:8mm; font-size:10px; color:#6b7280;">
+Sensormeter Display — Admin-Guide · github.com/peterhagelhof7-cmd/sensormeter-display ·
+Entwickelt mit Unterstützung von Claude (Anthropic) als Coding-Assistent
+</p>
+
+</body>
+</html>

@@ -1,0 +1,307 @@
+
+PFLICHTENHEFT – SENSORMETER DISPLAY (HW-458B)
+
+1. SYSTEMARCHITEKTUR
+
+Das System basiert auf einem ESP32 (ESP-WROOM-32, Board HW-458B) mit
+folgenden Software-Komponenten:
+
+- Arduino Framework (PlatformIO, Board esp32dev)
+- TFT_eSPI (ST7789P3, 4-Draht-SPI, 240x320)
+- Touch: eigener Bit-Bang-Treiber auf den TP_-Pins (keine SPI-Bibliothek,
+  siehe docs/entscheidungen.md)
+- LittleFS (nur für history.csv; alle übrigen Einstellungen liegen in NVS
+  über die Preferences-Bibliothek, siehe Abschnitt 3)
+- WLAN-Client (ESP32 WiFi)
+- NTP (ESP32-Kern, configTzTime/getLocalTime)
+- SnmpClient: selbstgeschriebener SNMP-v1-GET-Client (kein Vendor-Stack)
+- ESP32Ping (ICMP)
+- ESPAsyncWebServer/AsyncTCP (Einstellungs-Webserver, Abschnitt 8)
+- Update (ESP32-Kern, lokales OTA)
+
+Architekturstil: EIN kooperativer Arduino-Hauptloop (`main.cpp`) mit
+Manager-/View-Klassen als globale Objekte, kein RTOS-Taskgerüst und KEIN
+zentraler DataManager – jede Klasse hält ihren eigenen Zustand, Zugriff
+erfolgt über Getter/Setter direkt am jeweiligen Objekt. Ausnahme:
+`SettingsManager` ist mutex-geschützt (Abschnitt 9), da er als einziges
+Objekt sowohl vom Hauptloop/Touch-UI als auch vom asynchronen Webserver-
+Task gleichzeitig angefasst wird.
+
+------------------------------------------------------------
+
+2. SOFTWAREMODULE (Stand: vollständig umgesetzt, P0-P8 + Webserver/OTA +
+   Warnschwellwerte/Dashboard/Kalibrierung)
+
+2.1 DisplayManager
+TFT_eSPI-Init (Querbetrieb 320x240), Boot-Screen-Hilfsfunktion.
+
+2.2 TouchManager
+Bit-Bang-Ansteuerung der TP_-Pins, 2-Punkt-Kalibrierung, Kalibrierdaten in
+NVS (Namespace "touch").
+
+2.3 WlanManager
+WLAN-Scan (dedupliziert, nach RSSI sortiert, max. 6 Ergebnisse),
+Verbindungsaufbau, Zugangsdaten in NVS (Namespace "wifi"), Auto-Connect
+beim Start, Empfangsstärke für Statusleisten-Symbol.
+
+2.4 WifiOnboarding
+Blockierender UI-Ablauf: Netzliste + "Aktualisieren", Bildschirmtastatur
+(Buchstaben/Sonderzeichen, CAPS/SYM-Umschaltung) zur PSK-Eingabe,
+Verbindungsversuch, Speichern bei Erfolg.
+
+2.5 SensorManager (DHT11)
+Polling alle 5s, Plausibilitätsprüfung (-10…60°C, 0…100% rH), letzter
+gültiger Wert bleibt bei Fehlmessung erhalten.
+
+2.6 GraphManager
+DHT11-Ringpuffer (24 Einträge à 30 Minuten) in `history.csv` auf
+LittleFS, Laden beim Boot, Rendering (aktueller Wert + Temperatur-/
+Feuchte-Graph, Temperatur rot/linke Achse, Luftfeuchte blau/rechte Achse).
+
+2.7 TimeSync
+NTP-Sync gegen de.pool.ntp.org, deutsche Zeitzone inkl. Sommerzeit
+(POSIX-TZ `CET-1CEST,M3.5.0,M10.5.0/3`), Formatierung HH:MM / deutscher
+Wochentag + Datum.
+
+2.8 ClockView
+Uhrzeit-Datenquelle: HH:MM groß (oberes 2/3), Wochentag+Datum (unteres
+Drittel); Inhaltsbereich variabel (wächst, wenn im Static-Modus die untere
+Statusleiste entfällt).
+
+2.9 SnmpClient
+Minimaler SNMP-v1-GET-Client (eigene BER-Kodierung/-Dekodierung für genau
+einen skalaren Integer-Wert je Anfrage) - kein allgemeiner SNMP-Stack, da
+keine passende Client-Bibliothek verfügbar war (siehe
+docs/entscheidungen.md).
+
+2.10 SensormeterClient
+Fragt das Sensormeter-Projekt per SnmpClient ab (OIDs
+.1.3.6.1.4.1.99999.3.2.0/.3.3.0, INTEGER x10), alle 30s sofern Ziel-IP
+konfiguriert.
+
+2.11 SensormeterView
+Rendering des Sensormeter-Datenquellen-Screens (Temperatur/Luftfeuchte
+groß, ohne Verlaufsgraph).
+
+2.12 PingManager
+Kontinuierlicher Ping an google.com (ESP32Ping), gleitender Durchschnitt
+der letzten 5 Antwortzeiten; bis zu 5 Zusatzziele round-robin (max. 1
+Google-Ping + 1 Zielping pro update(), um Touch-Reaktion nicht zu
+blockieren); Fehlerstreak-Tracking für die 1-Minuten-Alarmschwelle.
+
+2.13 PingView
+Zwei Ansichten: Durchschnittslatenz (google.com) und Zielliste
+(IP + Status, grün/rot).
+
+2.14 LedManager
+RGB-Status-LED (GPIO17/4/16), blinkt rot bei anhaltendem Ping-Fehler.
+
+2.15 StatusBar
+Permanente Leisten (oben: Zahnrad/WLAN-Balken/DHT11-Werte, unten:
+Uhrzeit/Datum), max. 15% der langen Kante, hellgraue Symbole; optionale
+untere Leiste; bildschirmweite Hintergrundfarbe als Parameter (Ping-Alarm).
+
+2.16 Layout
+Zentrale Bildschirmaufteilungs-Konstanten (Statusleistenhöhe,
+Inhaltsbereich).
+
+2.17 DataSource
+Enums für Datenquellen (Dht11/Uhrzeit/Sensormeter/Ping/PingTargets) und
+Betriebsmodi (Slide/Static), generisch iterierbare Quellenliste.
+
+2.18 SettingsManager
+Persistiert Betriebsmodus, Slide-Intervall, Static-Quelle, Helligkeit,
+Sensormeter-Ziel (IP+Community), Ping-Ziele (bis 5), Gerätename,
+Web-Passwort — NVS-Namespace "settings". Mutex-geschützt (Abschnitt 9).
+
+2.19 BacklightManager
+Helligkeitsregelung per LEDC-PWM auf dem Backlight-Pin (Kanal 4).
+
+2.20 SettingsUI
+Touch-Bedienung des Zahnrad-Menüs: Slide (Intervallwahl), Static
+(Quellenwahl), Snake (startet SnakeGame), Systemeinstellungen (Helligkeit
+±, WLAN neu wählen, Sensormeter-Ziel, Ping-Ziele — beide über
+NumericKeypad).
+
+2.21 UiHelpers
+Gemeinsame Touch-UI-Bausteine (Treffertest, blockierendes Warten auf
+einen Tipp-Zyklus) — von WifiOnboarding und SettingsUI genutzt.
+
+2.22 NumericKeypad
+Telefon-Tastenfeld (Ziffern + Punkt) für IP-Adresseingaben (Sensormeter-
+Ziel, Ping-Ziele).
+
+2.23 SnakeGame
+Touch-Drittel-Steuerung (vertikale Zonen priorisiert), 16px-Raster
+(20x13 Felder), Kollisionslogik, Highscore in NVS (Namespace "snake"),
+Game-Over zeigt 20s den Punktestand. Einziger nicht-blockierender
+Screen-Loop (Touch-Poll unabhängig vom festen 200ms-Zug-Takt).
+
+2.24 OtaManager
+Dünner Wrapper um die Update-Bibliothek (lokales OTA per .bin-Upload).
+
+2.25 WebServerManager
+Async-Webserver (ESPAsyncWebServer/AsyncTCP, Port 80), zwei Seiten:
+"/" (öffentlich, kein Login, Auto-Refresh 30s) zeigt alle aktuellen Werte
+inkl. DHT11-Verlaufsgraph als inline SVG und Alarmbanner; "/settings"
+(HTTP-Basic-Auth) enthält das Einstellungsformular (Name, Passwort,
+Betriebsmodus, Helligkeit, Sensormeter-Ziele inkl. Warnschwellwerte,
+DHT11-Kalibrierkorrektur, Ping-Ziele inkl. Warnschwellwerte, Netzwerk,
+Anbieter-Branding) + OTA-Upload-Endpunkt sowie den Branding-Logo-Upload-
+und -Auslieferungs-Endpunkt (siehe 2.28). Nutzt zusätzlich
+`AlertEvaluator::computeAlertInfo()` (siehe 2.26) für den Alarmbanner.
+Kein REST-API/JSON.
+
+2.26 AlertEvaluator
+Reine Auswertungsfunktion (kein Objekt/State), aus main.cpp ausgelagert:
+prüft DHT11-, Sensormeter- und Ping-Werte gegen die in SettingsManager
+konfigurierten Warnschwellwerte und liefert eine `AlertInfo` (aktiv?,
+Richtung rot/blau, betroffene Quelle, Anzahl weiterer gleichzeitig
+betroffener Quellen). Wird identisch von main.cpp (Touch-UI/LED/Blink-
+Hintergrund) UND WebServerManager (Dashboard-Alarmbanner) aufgerufen,
+damit beide Anzeigen nie auseinanderlaufen können.
+
+2.27 BrandingManager
+Anbieter-Branding (Weisslabel), siehe docs/lastenheft.txt Abschnitt 7.5 -
+zuerst bei Sensormeter WLAN eingeführt (siehe dessen docs/entscheidungen.md),
+hier aber eine Neuentwicklung statt reiner Portierung (Farb-TFT statt
+monochromes OLED). Verwaltet ausschließlich das Logo-Bild auf LittleFS
+(/branding-logo.bin, 128x64 Pixel RGB565, exakt 16.384 Byte, eigener
+Mutex) - der Anbietername selbst liegt in SettingsManager (siehe 2.18/3.1).
+Tmp-Datei-plus-Umbenennen-Upload wie ConfigManager::save() bei den
+Geschwistern. hasLogo() hält den Vorhanden-Zustand in einem RAM-Cache
+statt bei jeder Abfrage LittleFS.exists() aufzurufen (Bibliotheks-Quirk,
+siehe sensormeter-wlan/repo/docs/entscheidungen.md).
+
+2.28 BrandingView
+Zeichnet DataSource::Branding (siehe 2.17): bevorzugt das Logo zentriert
+im Inhaltsbereich (TFT_eSPI::pushImage()), ohne Logo den Anbietername als
+Textzeile, ohne beides einen Platzhalter - gleicher Redraw-Cache wie
+ClockView/PingView. WebServerManager liefert dasselbe Logo zusätzlich als
+on-the-fly synthetisierten 24-Bit-BMP unter /branding/logo.bmp aus (kein
+PNG/JPEG-Decoder eingebunden).
+
+------------------------------------------------------------
+
+3. DATENSPEICHERUNG
+
+3.1 NVS (Preferences), je Modul ein eigener Namespace statt einer
+zentralen Konfigurationsdatei:
+- "wifi" (WlanManager): SSID, PSK
+- "touch" (TouchManager): Kalibrierkoeffizienten (xMin/xMax/yMin/yMax)
+- "settings" (SettingsManager): Betriebsmodus, Slide-Intervall,
+  Static-Quelle, Helligkeit, Sensormeter-IP+Community, Ping-Ziele (bis 5),
+  Gerätename, Web-Passwort, Anbieter-Branding-Vendorname (brandName, leer =
+  inaktiv)
+- "snake" (SnakeGame): Highscore
+
+3.2 LittleFS
+- `/history.csv`: DHT11-Ringpuffer, 24 Einträge (Zeitstempel, Temperatur
+  °C, Luftfeuchte %), Speicherintervall 30 Minuten, wird beim Boot
+  vollständig geladen
+- `/branding-logo.bin`: optional, nur vorhanden wenn ein Logo hochgeladen
+  wurde - 128x64 Pixel RGB565, exakt 16.384 Byte (siehe 2.27)
+
+------------------------------------------------------------
+
+4. STARTUP FLOW
+
+BOOT →
+  Display/Touch-Hardware initialisieren →
+  IF keine Touch-Kalibrierdaten (NVS "touch") → Kalibrierroutine →
+  SettingsManager + BacklightManager laden/anwenden →
+  IF WLAN-Zugangsdaten vorhanden (NVS "wifi") → automatischer
+  Verbindungsaufbau, sonst → WLAN-Onboarding (Scan/Auswahl/PSK-Eingabe) →
+  NTP-Sync anstoßen (nicht blockierend) →
+  Sensor/Graph/Ping-Module initialisieren, Webserver starten →
+  Normalbetrieb gemäß gespeicherter Betriebsart (Slide/Static)
+
+------------------------------------------------------------
+
+5. FEHLERBEHANDLUNG
+
+5.1 DHT11
+Fehlerhafter Read: letzten gültigen Wert beibehalten, kein Neustart/Absturz.
+
+5.2 WLAN
+Keine Verbindung: Statusleisten-Symbol blinkt (500ms-Takt, eigener
+300ms-Redraw-Zyklus der Statusleiste gegen Aliasing, siehe
+docs/entscheidungen.md).
+
+5.3 Sensormeter (SNMP)
+Timeout/keine Antwort: Anzeige "--" bzw. letzter gültiger Wert bleibt
+markiert bestehen, kein Blockieren des restlichen Systems.
+
+5.4 Ping
+Fehlschlag >1 Minute (google.com): LED blinkt rot, gesamte Anzeige
+wechselt bildschirmweit auf roten Hintergrund, unabhängig von der aktiven
+Datenquelle. Einzelne Zusatzziele: nur zeilenweise rot markiert.
+
+------------------------------------------------------------
+
+6. RESSOURCENRAHMEN (GEMESSEN, siehe docs/systemlast.md)
+
+Flash: 4 MB (32 Mbit) gesamt, eigene OTA-Partitionstabelle
+(`partitions_ota.csv`): zwei App-Slots (ota_0/ota_1) je 1,25 MB, LittleFS
+1,44 MB. Firmware aktuell 73,3% je App-Slot ausgelastet (~350 KB Reserve).
+
+RAM: 320 KB (327.680 Byte) SRAM, aktuell 14,4% statisch belegt
+(47.240 Byte) - kein Framebuffer/Doppelpufferung, TFT_eSPI zeichnet direkt.
+
+Details, Phasenverlauf und CPU-Zeitbudget: docs/systemlast.md.
+Strombedarf und Netzteilempfehlung: docs/stromversorgung.md.
+
+------------------------------------------------------------
+
+7. ERWEITERBARKEIT
+
+- Weitere Datenquellen nach demselben Schema ergänzbar (View-Klasse +
+  Eintrag in DataSource.h) - Auswahlliste in SettingsUI iteriert bereits
+  generisch über `kAvailableDataSources`
+- Sensormeter PRO (zweiter externer Sensor) über die bestehende
+  OID-Struktur (.4.x) abbildbar, sobald gewünscht
+
+------------------------------------------------------------
+
+8. WEBSERVER + OTA (Zusatzfunktion, siehe lastenheft.txt Abschnitt 11)
+
+Async (ESPAsyncWebServer/AsyncTCP), damit HTTP-Anfragen den Hauptloop
+nicht blockieren. Zwei Seiten: "/" (öffentliches Status-Dashboard, kein
+Login) und "/settings" (HTTP-Basic-Auth, fester Benutzername "admin",
+Passwort in NVS). Kein HTTPS-Client, kein Remote-Versionscheck -
+Firmware-Update ausschließlich per lokalem .bin-Upload, dafür ein Link zu
+den GitHub-Releases zum manuellen Herunterladen (identisches Vorgehen wie
+im Sensormeter-Projekt, dortige Begründung: HTTPS-Client kostet ~168 KB
+Flash allein) - Hinweis: aktuell existiert noch kein echtes GitHub-Release
+mit `.bin`-Anhang für dieses Repo, die `.bin` muss bis dahin selbst via
+`pio run` gebaut werden (siehe docs/admin-guide.pdf Abschnitt 8.1).
+
+------------------------------------------------------------
+
+9. NEBENLÄUFIGKEIT
+
+ESPAsyncWebServer verarbeitet Anfragen in einem eigenen FreeRTOS-Task,
+nicht im Arduino-Hauptloop. `SettingsManager` wird von beiden Seiten
+(Hauptloop/Touch-UI UND Web-Handler) gleichzeitig gelesen/geschrieben -
+abgesichert über einen FreeRTOS-Mutex (`SemaphoreHandle_t`) um jeden
+Getter/Setter, nach demselben Muster wie `DataManager` im
+Sensormeter-Projekt. `BacklightManager` (einfacher LEDC-Registerzugriff)
+und `OtaManager` (nur während eines einzelnen Uploads genutzt) sind
+bewusst nicht zusätzlich abgesichert.
+
+**Offener Punkt (noch NICHT abgesichert):** Seit dem Status-Dashboard
+liest `WebServerManager` zusätzlich auch `SensorManager`, `PingManager`,
+`SensormeterManager` und `GraphManager` (alle nur lesend, für die
+Dashboard-Anzeige) - diese vier Objekte werden weiterhin ausschließlich
+vom Hauptloop geschrieben (DHT11-/Ping-/Sensormeter-Polling,
+Verlaufs-Ringpuffer), aber OHNE Mutex, anders als `SettingsManager`.
+Insbesondere `String`-Rückgaben (z.B. `PingManager::targetIp()`,
+`SensormeterManager::systemName()`/`sensorName()`) sind ein theoretisches
+Risiko, da die Arduino-`String`-Klasse nicht thread-sicher ist - ein
+gleichzeitiger Schreibzugriff während des Web-Tasks mittendrin liest,
+könnte im ungünstigsten Fall zu einem inkonsistenten Zwischenzustand
+führen. Bisher ohne beobachtete Auswirkung (Werte sind einfache, selten
+gleichzeitig geänderte Skalare/kurze Strings, Zeitfenster entsprechend
+klein), aber nicht durch denselben Mutex-Mechanismus wie
+`SettingsManager` abgesichert. Nachziehen (gleiches Muster: Mutex je
+Objekt) wäre der korrekte Fix, bisher aus Aufwandsgründen zurückgestellt.

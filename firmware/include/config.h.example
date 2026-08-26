@@ -1,0 +1,16 @@
+#pragma once
+
+// ============================================================================
+// Kopiere diese Datei nach "config.h" (wird von Git ignoriert, siehe .gitignore).
+//
+// Anders als bei den Schwesterprojekten gibt es hier keine WLAN-Zugangsdaten
+// zur Kompilierzeit - die werden am Geraet selbst per Touch eingerichtet und
+// in NVS gespeichert. Hier steht nur die Firmware-Version.
+// ============================================================================
+
+#define DEVICE_FIRMWARE_VERSION "0.9.0-rc4"
+
+// Projekt-Kennung fuer die OTA-Herkunftspruefung (siehe OtaManager.h/.cpp) -
+// eindeutig je Sensormeter-Projekt, damit sich z.B. die .bin von Sensormeter
+// PoE nicht versehentlich auf diesem Geraet installieren laesst.
+#define FIRMWARE_PROJECT_ID "SENSORMETER-DISPLAY"

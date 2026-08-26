@@ -1,0 +1,581 @@
+<title>Sensormeter Display — Implementierungsplan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --paper: #E7E4DA;
+    --paper-raised: #FBFAF6;
+    --paper-sunken: #DEDACE;
+    --ink: #1E2530;
+    --ink-muted: #5B6472;
+    --line: #C7C2B4;
+    --copper: #B5622A;
+    --copper-strong: #8F4A1E;
+    --copper-wash: rgba(181, 98, 42, 0.12);
+    --patina: #3F6E63;
+    --patina-wash: rgba(63, 110, 99, 0.12);
+    --indigo: #3B5B8C;
+    --indigo-strong: #2B4368;
+    --rust: #A63D2E;
+    --rust-wash: rgba(166, 61, 46, 0.1);
+    --shadow: 0 1px 2px rgba(30, 37, 48, 0.06), 0 6px 20px -8px rgba(30, 37, 48, 0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #141A22;
+      --paper-raised: #1B222C;
+      --paper-sunken: #0F141A;
+      --ink: #E9E4D8;
+      --ink-muted: #8E97A3;
+      --line: #313A46;
+      --copper: #E08A4C;
+      --copper-strong: #F2A268;
+      --copper-wash: rgba(224, 138, 76, 0.14);
+      --patina: #74B7A6;
+      --patina-wash: rgba(116, 183, 166, 0.13);
+      --indigo: #7FA0D9;
+      --indigo-strong: #A0BBE6;
+      --rust: #E38A78;
+      --rust-wash: rgba(227, 138, 120, 0.12);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141A22;
+    --paper-raised: #1B222C;
+    --paper-sunken: #0F141A;
+    --ink: #E9E4D8;
+    --ink-muted: #8E97A3;
+    --line: #313A46;
+    --copper: #E08A4C;
+    --copper-strong: #F2A268;
+    --copper-wash: rgba(224, 138, 76, 0.14);
+    --patina: #74B7A6;
+    --patina-wash: rgba(116, 183, 166, 0.13);
+    --indigo: #7FA0D9;
+    --indigo-strong: #A0BBE6;
+    --rust: #E38A78;
+    --rust-wash: rgba(227, 138, 120, 0.12);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+  }
+  :root[data-theme="light"] {
+    --paper: #E7E4DA;
+    --paper-raised: #FBFAF6;
+    --paper-sunken: #DEDACE;
+    --ink: #1E2530;
+    --ink-muted: #5B6472;
+    --line: #C7C2B4;
+    --copper: #B5622A;
+    --copper-strong: #8F4A1E;
+    --copper-wash: rgba(181, 98, 42, 0.12);
+    --patina: #3F6E63;
+    --patina-wash: rgba(63, 110, 99, 0.12);
+    --indigo: #3B5B8C;
+    --indigo-strong: #2B4368;
+    --rust: #A63D2E;
+    --rust-wash: rgba(166, 61, 46, 0.1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono {
+    font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1, h2, h3 {
+    font-family: "Iowan Old Style", "Sitka Text", Georgia, serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 24px 88px;
+  }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: inherit;
+    font: 600 12px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--copper);
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 600;
+    margin-top: 10px;
+    color: var(--ink);
+  }
+  .lede {
+    max-width: 62ch;
+    color: var(--ink-muted);
+    font-size: 15.5px;
+    margin-top: 12px;
+  }
+  .lede .mono { color: var(--ink); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+
+  .roadmap { position: relative; }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    column-gap: 18px;
+  }
+
+  .gutter {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  .gutter::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: var(--line);
+    transform: translateX(-50%);
+  }
+  .stage:first-child .gutter::before { top: 22px; }
+  .stage:last-child .gutter::before { bottom: calc(100% - 22px); }
+
+  .node {
+    position: relative;
+    z-index: 1;
+    width: 15px;
+    height: 15px;
+    margin-top: 16px;
+    border-radius: 50%;
+    background: var(--paper-raised);
+    border: 2px solid var(--copper);
+  }
+  .node.baseline { border-color: var(--ink-muted); border-style: dashed; }
+  .node.terminal { background: var(--copper); }
+
+  .stage-body { padding-bottom: 40px; }
+  .stage:last-child .stage-body { padding-bottom: 0; }
+
+  .stage-label {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+  .stage-num {
+    font: 600 12px/1 ui-monospace, Consolas, monospace;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+  }
+  .stage-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+  .stage-note {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .cards.single { grid-template-columns: minmax(230px, 1fr); max-width: 460px; }
+
+  .card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--copper);
+    border-radius: 5px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+  }
+  .card:hover { transform: translateY(-1px); }
+
+  .card.baseline-card {
+    border-left-color: var(--ink-muted);
+    background: var(--paper-sunken);
+    box-shadow: none;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .card-code {
+    font: 600 12px/1 ui-monospace, Consolas, monospace;
+    color: var(--copper);
+    background: var(--copper-wash);
+    padding: 3px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+  .card h3 { font-size: 16.5px; font-weight: 600; margin-bottom: 2px; }
+  .card-modules {
+    font: 500 10.5px/1.4 ui-monospace, Consolas, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+
+  .card ul {
+    margin: 0 0 10px;
+    padding-left: 18px;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  .card li { margin-bottom: 3px; }
+  .card li::marker { color: var(--ink-muted); }
+
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .dep {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+  }
+  .dep .mono { color: var(--ink); }
+
+  .pill {
+    font: 600 10.5px/1 ui-monospace, Consolas, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 4px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pill.neu { background: var(--copper-wash); color: var(--copper-strong); }
+  .pill.baut { background: var(--patina-wash); color: var(--patina); }
+  .pill.extern { background: var(--rust-wash); color: var(--rust); }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  footer .mono { color: var(--ink); }
+
+  @media (max-width: 520px) {
+    .stage { grid-template-columns: 30px 1fr; column-gap: 10px; }
+    .wrap { padding: 40px 16px 64px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Sensormeter Display · HW-458B</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <svg viewBox="0 0 48 48" fill="none" width="30" height="30" style="flex-shrink:0;">
+        <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="var(--line)" stroke-width="2.2" stroke-linejoin="round"/>
+        <circle cx="24" cy="9" r="5" fill="var(--copper)"/>
+        <circle cx="37.6" cy="32.5" r="5" fill="var(--indigo)"/>
+        <circle cx="10.4" cy="32.5" r="5" fill="var(--patina)"/>
+        <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="var(--ink)" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="24" cy="24.67" r="2.6" fill="var(--ink)"/>
+      </svg>
+      <h1>Implementierungsplan</h1>
+    </div>
+    <p class="lede">
+      Reihenfolge von der Projektstruktur bis zur vollständigen Firmware gemäß
+      <span class="mono">lastenheft.txt</span> / <span class="mono">pflichtenheft.txt</span>.
+      Kein bestehender Prototyp — Startpunkt ist ein leeres PlatformIO-Projekt.
+    </p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--copper)"></span>Kernfunktion (Lastenheft)</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--patina)"></span>Baut auf vorheriger Stufe auf</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--rust)"></span>Abhängig von externem Gerät (Sensormeter-Projekt)</span>
+    </div>
+  </header>
+
+  <div class="roadmap">
+
+    <!-- Baseline -->
+    <div class="stage">
+      <div class="gutter"><div class="node baseline"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">HEUTE</span>
+          <span class="stage-title">Ausgangspunkt</span>
+        </div>
+        <div class="cards single">
+          <div class="card baseline-card">
+            <div class="card-head">
+              <h3 style="font-size:15px">Kein Code</h3>
+            </div>
+            <div class="card-modules">lastenheft.txt · pflichtenheft.txt</div>
+            <ul>
+              <li>HW-458B in Betrieb genommen, Pinbelegung geklärt (DHT11 auf IO22)</li>
+              <li>Anforderungen aus Beschreibung.txt strukturiert festgehalten</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P0 -->
+    <div class="stage">
+      <div class="gutter"><div class="node"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">STUFE 1</span>
+          <span class="stage-title">Grundgerüst</span>
+        </div>
+        <div class="cards single">
+          <div class="card">
+            <div class="card-head"><span class="card-code">P0</span></div>
+            <h3>Projektstruktur, Display &amp; Touch</h3>
+            <div class="card-modules">DisplayManager · TouchManager</div>
+            <ul>
+              <li>PlatformIO-Projekt (Board esp32dev), Pin-Definitionen zentral</li>
+              <li>ST7789P3-Init, Grunddarstellung weiß/schwarz, 7-Segment-Font</li>
+              <li>Touch-Rohwerterfassung + Kalibrierroutine (Speicherung Flash)</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">—</span></span>
+              <span class="pill neu">Kernfunktion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P1 -->
+    <div class="stage">
+      <div class="gutter"><div class="node"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">STUFE 2</span>
+          <span class="stage-title">Netzwerk-Onboarding</span>
+        </div>
+        <div class="cards single">
+          <div class="card">
+            <div class="card-head"><span class="card-code">P1</span></div>
+            <h3>WLAN-Ersteinrichtung</h3>
+            <div class="card-modules">WlanManager · FlashManager</div>
+            <ul>
+              <li>WLAN-Scan, Listendarstellung, "Aktualisieren"-Button</li>
+              <li>Touch-Auswahl, Bildschirmtastatur, PSK-Eingabe</li>
+              <li>Speicherung in Flash, Auto-Connect bei jedem Start</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P0</span></span>
+              <span class="pill neu">Kernfunktion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="stage">
+      <div class="gutter"><div class="node"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">STUFE 3</span>
+          <span class="stage-title">Statusleiste &amp; erste Datenquelle</span>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="card-head"><span class="card-code">P2</span></div>
+            <h3>Statusleiste</h3>
+            <div class="card-modules">DisplayManager</div>
+            <ul>
+              <li>Zahnrad, WLAN-Balken (blinkt ohne Verbindung), DHT11-Werte, Uhrzeit</li>
+              <li>Begrenzung auf 15 % der langen Kante, hellgraue Symbole</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P0, P1</span></span>
+              <span class="pill neu">Kernfunktion</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-code">P3</span></div>
+            <h3>DHT11-Datenquelle</h3>
+            <div class="card-modules">SensorManager · GraphManager</div>
+            <ul>
+              <li>Polling alle 5s, Anzeige oberes Drittel</li>
+              <li>Graph unten: 24 Messpunkte/30min, rot/blau, °C/% ganzzahlig</li>
+              <li>history.csv-Ringpuffer, Laden beim Boot</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P2</span></span>
+              <span class="pill baut">Baut auf P2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="stage">
+      <div class="gutter"><div class="node"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">STUFE 4</span>
+          <span class="stage-title">Zeit &amp; Bedienung</span>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="card-head"><span class="card-code">P4</span></div>
+            <h3>Uhrzeit-Datenquelle</h3>
+            <div class="card-modules">TimeManager</div>
+            <ul>
+              <li>NTP-Sync de.pool.ntp.org, CET/CEST</li>
+              <li>HH:MM (24h) oben, Wochentag + Datum unten</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P1</span></span>
+              <span class="pill baut">Baut auf P1</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-code">P5</span></div>
+            <h3>Einstellungen &amp; Betriebsarten</h3>
+            <div class="card-modules">SettingsManager</div>
+            <ul>
+              <li>Slide (Intervall 5–60s), Static, Systemeinstellungen</li>
+              <li>Helligkeit ± (Default 60 %), WLAN-Neukonfiguration</li>
+              <li>Alle Auswahlen persistiert in Flash</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P2, P3, P4</span></span>
+              <span class="pill baut">Baut auf P2–P4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P6 -->
+    <div class="stage">
+      <div class="gutter"><div class="node"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">STUFE 5</span>
+          <span class="stage-title">Spiel &amp; externe Anbindungen</span>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="card-head"><span class="card-code">P6</span></div>
+            <h3>Snake</h3>
+            <div class="card-modules">SnakeGame</div>
+            <ul>
+              <li>Touch-Drittel-Steuerung (hoch/runter/links/rechts)</li>
+              <li>Game-Over: Punktestand 20s, dann zurück zu Settings</li>
+              <li>Highscore in Flash</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P0, P5</span></span>
+              <span class="pill neu">Kernfunktion</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-code">P7</span></div>
+            <h3>Sensormeter-Anbindung (SNMP)</h3>
+            <div class="card-modules">SensormeterClient</div>
+            <ul>
+              <li>SNMP-v1-GET gegen konfiguriertes Zielgerät, alle 30s</li>
+              <li>OID-Struktur bereits bekannt (Sensormeter-Projekt, .1.3.6.1.4.1.99999.x)</li>
+              <li>Fehlerkennzeichnung bei Timeout</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P1, P5</span></span>
+              <span class="pill extern">Externes Gerät nötig</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-code">P8</span></div>
+            <h3>Ping-Überwachung</h3>
+            <div class="card-modules">PingManager · LedManager</div>
+            <ul>
+              <li>google.com, gleitender Durchschnitt letzte 5 Latenzen</li>
+              <li>Bis zu 5 Zusatzziele, eigene Slide mit Status je Zeile</li>
+              <li>&gt;1min Fehler: LED rot blinkend + Display-Hintergrund rot</li>
+            </ul>
+            <div class="card-foot">
+              <span class="dep">Voraussetzung: <span class="mono">P1, P5</span></span>
+              <span class="pill neu">Kernfunktion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="stage">
+      <div class="gutter"><div class="node terminal"></div></div>
+      <div class="stage-body">
+        <div class="stage-label">
+          <span class="stage-num">ZIEL</span>
+          <span class="stage-title">Vollständige Firmware gemäß Lastenheft</span>
+        </div>
+        <div class="cards single">
+          <div class="card">
+            <h3 style="font-size:15px">P0–P8 umgesetzt</h3>
+            <div class="card-modules">Alle Module</div>
+            <ul>
+              <li>Alle Datenquellen, Betriebsarten und Fehlerbehandlungen aus lastenheft.txt aktiv</li>
+              <li>Offen: Praxistest auf echter Hardware, DHT11-Pin (IO22 vs. IO27) verifizieren</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    Sensormeter Display — <span class="mono">lastenheft.txt</span> ist das führende
+    Anforderungsdokument, dieser Plan sowie
+    <span class="mono">pflichtenheft.txt</span> leiten sich daraus ab.
+  </footer>
+</div>

@@ -1,0 +1,17 @@
+# Name,   Type, SubType, Offset,   Size,     Flags
+# Eigene, explizite Partitionstabelle (funktional identisch zum verifizierten
+# PlatformIO-Standardschema fuer esp32dev, siehe docs/entscheidungen.md) -
+# zwei App-Slots (ota_0/ota_1) fuer OTA, LittleFS, und eine coredump-
+# Partition. Die coredump-Partition wurde urspruenglich weggelassen
+# (zugunsten von mehr LittleFS); auf echter Hardware zeigte sich dadurch
+# bei jedem Boot "No core dump partition found!" im seriellen Log (harmlos,
+# aber unnoetiger Log-Rauschen, und Crash-Dumps waeren fuer spaetere
+# Fehlersuche durchaus nuetzlich) - daher wieder ergaenzt, LittleFS dafuer
+# 64K kleiner (1408K statt 1472K), fuer die 24-Zeilen history.csv weiterhin
+# weit mehr als noetig.
+nvs,      data, nvs,     0x9000,   0x5000,
+otadata,  data, ota,     0xe000,   0x2000,
+app0,     app,  ota_0,   0x10000,  0x140000,
+app1,     app,  ota_1,   0x150000, 0x140000,
+spiffs,   data, spiffs,  0x290000, 0x160000,
+coredump, data, coredump,0x3f0000, 0x10000,

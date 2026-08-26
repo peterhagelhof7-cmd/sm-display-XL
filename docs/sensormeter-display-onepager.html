@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Sensormeter Display — One-Pager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1c2430;
+    background: #ffffff;
+    font-size: 10.5px;
+    line-height: 1.32;
+  }
+  .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 0 0 3mm 0; }
+
+  header {
+    background: #0f1f3d;
+    color: #ffffff;
+    padding: 6mm 12mm 4mm 12mm;
+  }
+  .eyebrow {
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9fb3d9;
+    margin-bottom: 2.5mm;
+  }
+  h1 {
+    margin: 0 0 1.5mm 0;
+    font-size: 23px;
+    letter-spacing: 0.02em;
+  }
+  .subtitle { color: #cdd8ec; font-size: 11px; margin-bottom: 3mm; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-orange { background: #c8622a; color: #fff; }
+  .badge-navy { background: #24365c; color: #cdd8ec; }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8mm;
+    padding: 5mm 12mm 0 12mm;
+  }
+  h2 {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c8622a;
+    border-bottom: 1px solid #e4e1d8;
+    padding-bottom: 1.2mm;
+    margin: 0 0 2mm 0;
+  }
+  section + section { margin-top: 3.5mm; }
+  p { margin: 0 0 1.5mm 0; }
+  ul { margin: 0; padding-left: 4mm; }
+  li { margin-bottom: 0.8mm; }
+
+  .modgroup { margin-bottom: 2mm; }
+  .modgroup-label {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a93a3;
+    margin-bottom: 1mm;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 2.5px; }
+  .pill {
+    background: #f2f0e9;
+    border: 1px solid #e4e1d8;
+    border-radius: 3px;
+    padding: 1.5px 5px;
+    font-size: 9px;
+    color: #33261b;
+  }
+  .pill-new { background: #eaf3ef; border-color: #b9d9cc; color: #1f5c46; font-weight: 600; }
+
+  .flow-box {
+    border: 1px solid #e4e1d8;
+    border-left: 3px solid #c8622a;
+    border-radius: 3px;
+    padding: 2mm 3mm;
+    margin-bottom: 1.5mm;
+    background: #fbfaf7;
+  }
+  .flow-title { font-weight: 700; font-size: 10px; }
+  .flow-sub { color: #6b7280; font-size: 9px; }
+  .flow-arrow { text-align: center; color: #b0b6c0; font-size: 10px; margin: 0.5mm 0; }
+
+  table.kpi { width: 100%; border-collapse: collapse; }
+  table.kpi td { padding: 1.2mm 0; border-bottom: 1px solid #eeece5; font-size: 10px; }
+  table.kpi td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  footer {
+    margin: 3mm 12mm 0 12mm;
+    padding-top: 2mm;
+    border-top: 1px solid #e4e1d8;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 9px;
+    color: #6b7280;
+  }
+  footer a { color: #c8622a; text-decoration: none; }
+  footer .repo { font-weight: 600; color: #1c2430; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="eyebrow">Firmware-Projekt · Hobby / Privat</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <svg viewBox="0 0 48 48" fill="none" width="32" height="32" style="flex-shrink:0;">
+      <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="#8E97A3" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="24" cy="9" r="5" fill="#E08A4C"/>
+      <circle cx="37.6" cy="32.5" r="5" fill="#7FA0D9"/>
+      <circle cx="10.4" cy="32.5" r="5" fill="#74B7A6"/>
+      <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="#E9E4D8" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="24" cy="24.67" r="2.6" fill="#E9E4D8"/>
+    </svg>
+    <h1>SENSORMETER DISPLAY</h1>
+  </div>
+  <div class="subtitle">ESP32-Touchdisplay (HW-458B) — DHT11, Uhrzeit, Sensormeter-SNMP (Mehrfachziel), Ping-Monitor, Anbieter-Branding, Snake</div>
+  <div class="badges">
+    <span class="badge badge-orange">v0.9.0-rc3 · Beta</span>
+    <span class="badge badge-navy">P0–P8 vollständig</span>
+    <span class="badge badge-navy">Touch-UI · Webserver · Branding · OTA</span>
+    <span class="badge badge-navy">bis zu 5 Sensormeter-Ziele</span>
+    <span class="badge badge-navy">Schwesterprojekt: Sensormeter (WT32-ETH01)</span>
+  </div>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>Überblick</h2>
+      <p>2,8"-Touchdisplay mit fünf Datenquellen: interner DHT11 (12h-Graph),
+      Uhrzeit/Datum (NTP), SNMP-Abfrage von bis zu 5 Sensormeter-Zielen
+      (automatische Slides, PRO-Geräte mit zwei Sensoren erkannt),
+      Ping-Latenz zu google.com sowie bis zu 5 Ping-Zusatzziele. Dazu Snake
+      als Bonus-Modus.</p>
+      <p>Komplett lokal per Touch bedienbar, zusätzlich Einstellungs-
+      Webserver mit lokalem OTA-Update, Geräte-Info-Dialog (Systemname/IP/
+      Verbindungsart) und optionaler Static-IP-Konfiguration.</p>
+    </section>
+
+    <section>
+      <h2>Hardware</h2>
+      <ul>
+        <li>HW-458B: ESP-WROOM-32 + 2,8" TFT ST7789P3, 240x320</li>
+        <li>Touch: resistiv, 4-Draht, per Bit-Bang angesteuert</li>
+        <li>DHT11 am Erweiterungsanschluss IO2 (GPIO22)</li>
+        <li>RGB-Status-LED (GPIO17/4/16), gemeinsame Anode</li>
+        <li>Netzteil: 5V / 1A USB empfohlen</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Pin-Herkunft &amp; Hardware-Befunde</h2>
+      <p>TFT-SPI-Pins fehlen im Hersteller-Datenblatt – über ein
+      identisches Referenzdesign (LCDWIKI E32R28T) erschlossen und durch
+      funktionierenden Betrieb bestätigt.</p>
+      <p>Erster echter Hardware-Test deckte mehrere reale Befunde auf:
+      vertauschter X/Y-Touch-Kanal, standardmäßig aktivierte
+      TFT_eSPI-Farbinvertierung (INVON), umgekehrte LED-Polarität. Details:
+      <b>entscheidungen.md</b>.</p>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>Software-Architektur</h2>
+
+      <div class="modgroup">
+        <div class="modgroup-label">Anzeige</div>
+        <div class="pill-row">
+          <span class="pill">DisplayManager</span><span class="pill">StatusBar</span>
+          <span class="pill">ClockView</span><span class="pill">GraphManager</span>
+          <span class="pill">SensormeterView</span><span class="pill">PingView</span>
+        </div>
+      </div>
+
+      <div class="modgroup">
+        <div class="modgroup-label">Bedienung</div>
+        <div class="pill-row">
+          <span class="pill">TouchManager</span><span class="pill">WifiOnboarding</span>
+          <span class="pill">SettingsUI</span><span class="pill">NumericKeypad</span>
+          <span class="pill">SnakeGame</span>
+          <span class="pill pill-new">InfoUI</span>
+        </div>
+      </div>
+
+      <div class="modgroup">
+        <div class="modgroup-label">Netzwerk</div>
+        <div class="pill-row">
+          <span class="pill">WlanManager</span><span class="pill">SnmpClient</span>
+          <span class="pill pill-new">SensormeterManager</span><span class="pill">PingManager</span>
+          <span class="pill">WebServerManager</span><span class="pill">OtaManager</span>
+          <span class="pill pill-new">BrandingManager</span><span class="pill pill-new">BrandingView</span>
+        </div>
+      </div>
+
+      <div class="modgroup">
+        <div class="modgroup-label">Sonstiges</div>
+        <div class="pill-row">
+          <span class="pill">SettingsManager</span><span class="pill">BacklightManager</span>
+          <span class="pill">LedManager</span><span class="pill">TimeSync</span>
+          <span class="pill">UiHelpers</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Datenfluss</h2>
+      <div class="flow-box">
+        <div class="flow-title">Datenquellen</div>
+        <div class="flow-sub">DHT11 · NTP · SNMP (bis zu 5 Sensormeter, Round-Robin) · Ping · Branding-Logo (LittleFS)</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box">
+        <div class="flow-title">SettingsManager, Sensor-/Ping-/Sensormeter-/GraphManager/<b>BrandingManager</b></div>
+        <div class="flow-sub">alle sechs mutex-geschützt (Hauptloop + async Web-Task)</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box">
+        <div class="flow-title">Touch-UI / Webserver (Dashboard + Einstellungen) / OTA</div>
+        <div class="flow-sub">TFT · HTTP · .bin-Upload · <b>on-the-fly BMP</b></div>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>Status &amp; Kennzahlen</h2>
+      <table class="kpi">
+        <tr><td>Version</td><td>0.9.0-rc3 (Beta)</td></tr>
+        <tr><td>Phasen umgesetzt</td><td>P0–P8 + Web/OTA</td></tr>
+        <tr><td>Flash je App-Slot</td><td>80,1 %</td></tr>
+        <tr><td>RAM (statisch)</td><td>27,8 %</td></tr>
+        <tr><td>Ø-Stromaufnahme</td><td>~130–170 mA</td></tr>
+        <tr><td>Spitzenstrom (3,3V)</td><td>~385 mA</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Funktionen</h2>
+      <ul>
+        <li>Slide/Static-Modus über alle 6 Datenquellen</li>
+        <li>Bis zu 5 Sensormeter-Ziele (SNMP), automatische PRO-Erkennung (2 Sensoren)</li>
+        <li>WLAN-Ersteinrichtung per Touch (Scan + Bildschirmtastatur)</li>
+        <li>Bildschirmweiter Rot-Alarm bei &gt;1min Ping-Ausfall</li>
+        <li>Einstellungs-Webserver (Name, Modi, Sensormeter-/Ping-Ziele)</li>
+        <li><b>Live-Status-Dashboard</b> auf der Startseite (öffentlich, kein Login, Auto-Refresh 30s)</li>
+        <li><b>Geräte-Info-Dialog</b> (Systemname/IP/DHCP-Static)</li>
+        <li><b>Static-IP-Konfiguration</b> im Webinterface, jetzt mit Ping-/DHCP-Lease-Check vor der Übernahme</li>
+        <li><b>Anbieter-Branding</b> (neu): Name + Logo (128×64, Farbe), eigene Datenquelle, Web-Header-Banner, on-the-fly 24-Bit-BMP statt PNG-Decoder</li>
+        <li>Lokales OTA-Update per .bin-Upload</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Entwicklungsansatz</h2>
+      <ul>
+        <li>Jede Phase per <b>pio run</b> gebaut &amp; verifiziert, Aenderungen auf echter Hardware geflasht</li>
+        <li>Entscheidungen laufend im Entscheidungsprotokoll begründet</li>
+        <li>Gefundene Bugs (u. a. Datenrennen, Layout-Overflow, vertauschter Touch-Kanal, Farbinvertierung, LED-Polarität) vor dem Commit behoben</li>
+        <li>Mutex-Schutz von SettingsManager auf vier weitere Klassen (Sensor-/Ping-/Sensormeter-/GraphManager) ausgeweitet, nachdem das Live-Status-Dashboard sie erstmals aus einem zweiten Task (async Webserver) heraus lesend nutzte - blockierende Netzwerk-I/O (Ping/SNMP) bewusst außerhalb der Sperre, siehe entscheidungen.md</li>
+        <li>Beim Branding-Feature einen Use-after-free vor dem Ausliefern gefunden: der urspruengliche heap-allozierte BMP-Puffer wurde direkt nach <b>request-&gt;send()</b> freigegeben, obwohl ESPAsyncWebServer erst asynchron NACH Rueckkehr aus der Funktion daraus liest - auf statische Puffer umgestellt</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Offen</h2>
+      <ul>
+        <li>Mehrfach-Sensormeter-Funktion noch nicht mit echtem Sensormeter-Gerät end-to-end verifiziert</li>
+        <li>Ping-Timeout-Risiko für Touch-Reaktion bei Netzwerkausfall</li>
+        <li>Branding-Logo-Rendering (TFT-Farbkanal-Vorbehalt, siehe Entwicklungsansatz-Vorgeschichte zu TFT_RGB_ORDER) und Web-Upload-Flow nicht auf echter Hardware getestet</li>
+        <li>DHCP-Lease-Test (Netzwerk-Einstellungen) noch nicht auf echter Hardware ausgelöst/verifiziert</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Einstieg</h2>
+      <ul>
+        <li><b>scripts/flash.ps1 -Project display</b> – Setup + Flash</li>
+        <li><b>docs/lastenheft.txt</b> – Anforderungen inkl. Webserver-Nachtrag</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div>
+    <div class="repo">github.com/peterhagelhof7-cmd/sensormeter-display</div>
+    <div>Entwickelt mit Unterstützung von Claude (Anthropic) als Coding-Assistent</div>
+  </div>
+  <div style="text-align:right;max-width:90mm;">
+    <b>Kerndokumente im Repo:</b> Lastenheft · Pflichtenheft · Entscheidungsprotokoll ·
+    Implementierungsplan · Systemlast-Analyse · Stromversorgung · Stückliste · ZABBIX-Integration
+  </div>
+</footer>
+
+</div>
+</body>
+</html>

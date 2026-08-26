@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Sensormeter Display — Verdrahtungsplan (interaktiv)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1c2430;
+    background: #ffffff;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  header {
+    background: #0f1f3d;
+    color: #fff;
+    margin: -18mm -16mm 8mm -16mm;
+    padding: 10mm 16mm 8mm 16mm;
+  }
+  .eyebrow { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: #9fb3d9; margin-bottom: 3mm; }
+  h1 { margin: 0 0 2mm 0; font-size: 22px; }
+  .subtitle { color: #cdd8ec; font-size: 12px; }
+  .badges { margin-top: 5mm; display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 3px; font-size: 10px; font-weight: 600; background: #24365c; color: #cdd8ec; }
+  .badge-orange { background: #c8622a; color: #fff; }
+
+  h2 { font-size: 13.5px; color: #8f4a1e; margin: 7mm 0 3mm 0; border-bottom: 1px solid #e4e1d8; padding-bottom: 1.5mm; }
+  h3 { font-size: 12px; color: #1c2430; margin: 5mm 0 2mm 0; }
+  p { margin: 0 0 3mm 0; }
+  code { font-family: Consolas, "Cascadia Mono", "Courier New", monospace; background: #f2f0e9; border: 1px solid #e4e1d8; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+  table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm 0; }
+  table th, table td { border: 1px solid #e4e1d8; padding: 1.8mm 3mm; font-size: 11.5px; text-align: left; vertical-align: middle; }
+  table th { background: #f2f0e9; }
+  .dot { display: inline-block; width: 3mm; height: 3mm; border-radius: 50%; margin-right: 2mm; vertical-align: middle; }
+  .callout { border-left: 3px solid #c8622a; background: #fbf3ee; padding: 3mm 4mm; margin: 3mm 0; border-radius: 0 3px 3px 0; }
+  .callout-title { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #8f4a1e; margin-bottom: 1mm; }
+  .callout.warn { border-left-color: #a63d2e; background: #fbeeec; }
+  .callout.warn .callout-title { color: #a63d2e; }
+
+  footer { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #e4e1d8; font-size: 9.5px; color: #6b7280; }
+
+  /* Interaktives Schema: Klick auf einen Draht hebt ihn hervor und zeigt
+     Von/Nach in der Info-Zeile darunter. wire-hit ist ein unsichtbarer,
+     breiterer Klick-Bereich hinter dem duennen sichtbaren wire-Pfad. */
+  .wire { cursor: pointer; transition: stroke-width .12s ease, opacity .12s ease; }
+  .wire-hit { fill: none; stroke: transparent; stroke-width: 11; cursor: pointer; }
+  .wire.active { stroke-width: 3.4; filter: drop-shadow(0 0 2.5px rgba(0,0,0,.55)); }
+  .wire.dimmed { opacity: .18; }
+  .wire-info {
+    margin-top: 3mm; padding: 3mm 4mm; border-radius: 3px;
+    background: #f2f0e9; border: 1px solid #e4e1d8; color: #6b7280;
+    font-size: 11px; min-height: 1.5em;
+  }
+  .wire-info.active { background: #fbf3ee; border-color: #e2b493; color: #1c2430; }
+  .wire-info b { color: #8f4a1e; }
+  @media print {
+    .wire, .wire-hit { cursor: default; }
+    .wire-info { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Firmware-Projekt · Hobby / Privat · TFT/Touch/RGB-LED sind fest auf der Platine verdrahtet, nur DHT11 wird per Hand angeschlossen</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <svg viewBox="0 0 48 48" fill="none" width="32" height="32" style="flex-shrink:0;">
+      <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="#8E97A3" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="24" cy="9" r="5" fill="#E08A4C"/>
+      <circle cx="37.6" cy="32.5" r="5" fill="#7FA0D9"/>
+      <circle cx="10.4" cy="32.5" r="5" fill="#74B7A6"/>
+      <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="#E9E4D8" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="24" cy="24.67" r="2.6" fill="#E9E4D8"/>
+    </svg>
+    <h1>SENSORMETER DISPLAY — VERDRAHTUNGSPLAN</h1>
+  </div>
+  <div class="subtitle">HW-458B (ESP-WROOM-32 + ST7789P3 2,8", 240×320, integriertes TFT+Touch-Board) + externer DHT11</div>
+  <div class="badges">
+    <span class="badge badge-orange">IO22 · DHT11 DATA (einzige externe Verkabelung)</span>
+    <span class="badge">github.com/peterhagelhof7-cmd/sensormeter-display</span>
+  </div>
+</header>
+
+<div class="callout">
+  <div class="callout-title">Nur DHT11 wird tatsächlich verkabelt</div>
+  TFT, Touch, RGB-Status-LED, Audio, Lichtsensor und SD-Kartenslot sind
+  Teil der integrierten HW-458B-Platine (ESP-WROOM-32 + ST7789P3 bereits
+  vorverlötet) - feste Leiterbahnen, keine Jumper-Kabel. Das interaktive
+  Schema unten zeigt deshalb nur die eine tatsächliche Handverkabelung:
+  den externen DHT11-Sensor. Die vollständige Pinbelegung aller onboard-
+  Baugruppen steht weiterhin in der Tabelle darunter.
+</div>
+
+<h2>Bauteile</h2>
+<table>
+  <tr><th>Bauteil</th><th>Anschlüsse</th></tr>
+  <tr><td>HW-458B (ESP-WROOM-32 + ST7789P3-TFT + resistiver Touch, integriertes Board)</td><td>TFT und Touch sind fest auf derselben Platine verdrahtet - keine externe Verkabelung nötig, siehe Abschnitte unten</td></tr>
+  <tr><td>DHT11, 3-Pin (VCC/GND/DATA)</td><td>einziges tatsächlich extern verkabeltes Bauteil - über den 4-poligen Erweiterungsanschluss „IO2"</td></tr>
+  <tr><td>RGB-Status-LED (onboard)</td><td>3 Farbkanäle + gemeinsame Kathode, laut Datenblatt fest verdrahtet</td></tr>
+</table>
+
+<h2>Pinbelegung</h2>
+<table>
+  <tr><th>ESP32-Pin</th><th>Verbindet mit</th><th>Funktion</th></tr>
+  <tr><td><code>IO13</code></td><td>TFT MOSI</td><td><span class="dot" style="background:#2e6da4;"></span>SPI-Datenleitung zum Display (onboard)</td></tr>
+  <tr><td><code>IO12</code></td><td>TFT MISO</td><td><span class="dot" style="background:#c8622a;"></span>SPI-Rückkanal (onboard, meist ungenutzt)</td></tr>
+  <tr><td><code>IO14</code></td><td>TFT SCLK</td><td><span class="dot" style="background:#5c9e6c;"></span>SPI-Takt (onboard)</td></tr>
+  <tr><td><code>IO15</code></td><td>TFT CS</td><td><span class="dot" style="background:#7a5cad;"></span>Chip-Select TFT (onboard)</td></tr>
+  <tr><td><code>IO2</code></td><td>TFT DC</td><td><span class="dot" style="background:#a63d2e;"></span>Data/Command-Umschaltung (onboard)</td></tr>
+  <tr><td><code>IO21</code></td><td>TFT BL (Backlight)</td><td><span class="dot" style="background:#c9a227;"></span>Hintergrundbeleuchtung, PWM (LEDC) für Helligkeitsregelung</td></tr>
+  <tr><td><code>IO25</code></td><td>Touch CLK</td><td><span class="dot" style="background:#8a93a3;"></span>Touch-SPI-Takt, eigener Bus (onboard)</td></tr>
+  <tr><td><code>IO33</code></td><td>Touch CS</td><td><span class="dot" style="background:#1f9e89;"></span>Chip-Select Touch-Controller (onboard)</td></tr>
+  <tr><td><code>IO32</code></td><td>Touch DIN (Touch-MOSI)</td><td><span class="dot" style="background:#d4a017;"></span>Touch-SPI-Datenleitung zum Controller (onboard)</td></tr>
+  <tr><td><code>IO39</code></td><td>Touch OUT (Touch-MISO)</td><td><span class="dot" style="background:#6a4c93;"></span>Touch-SPI-Rückkanal (onboard, Input-only-Pin)</td></tr>
+  <tr><td><code>IO36</code></td><td>Touch IRQ</td><td><span class="dot" style="background:#b5654a;"></span>Touch-Interrupt (onboard, Input-only-Pin)</td></tr>
+  <tr><td><code>IO22</code></td><td>DHT11 DATA</td><td><span class="dot" style="background:#3f7cac;"></span>1-Wire-Digitalsignal, <b>einzige externe Verkabelung</b> über Erweiterungsanschluss „IO2"</td></tr>
+  <tr><td><code>IO17</code></td><td>LED R</td><td><span class="dot" style="background:#e63946;"></span>Rotkanal RGB-Status-LED (onboard)</td></tr>
+  <tr><td><code>IO4</code></td><td>LED G</td><td><span class="dot" style="background:#52b788;"></span>Grünkanal RGB-Status-LED (onboard)</td></tr>
+  <tr><td><code>IO16</code></td><td>LED B</td><td><span class="dot" style="background:#4361ee;"></span>Blaukanal RGB-Status-LED (onboard)</td></tr>
+</table>
+<p class="hint" style="font-size:10px;color:#6b7280;">TFT RST liegt auf <code>-1</code> (an EN gebunden, kein eigener GPIO). TFT-SPI-Pins (MOSI/MISO/SCLK/CS/DC/BL) stehen nicht im offiziellen Produktbild (siehe unten), sondern nur über das baugleiche Referenzdesign LCDWIKI E32R28T/E32N28T bestätigt - alle übrigen Pins in dieser Tabelle (Touch, RGB-LED, Audio, Lichtsensor, SD-Slot) sind über das Produktbild <code>docs/hw-458b-pinout-datenblatt.jpg</code> direkt vom Verkäufer bestätigt.</p>
+
+<h2>Schema</h2>
+<p class="hint" style="font-size:10px;color:#6b7280;margin-top:-1mm;">Interaktiv: Klick auf einen Draht hebt ihn hervor und zeigt Start-/Zielpin unten an. Klick auf die freie Fläche hebt die Auswahl wieder auf. Nur der DHT11 wird tatsächlich verkabelt - TFT/Touch/RGB-LED sind onboard und erscheinen deshalb nicht als Drähte (siehe Tabelle oben für deren Pinbelegung).</p>
+<svg id="wiringSvg" viewBox="0 0 800 260" style="width:100%; max-width:170mm; height:auto; font-family:inherit;">
+  <!-- HW-458B board -->
+  <rect x="30" y="20" width="170" height="220" rx="6" fill="#2b2f36"/>
+  <rect x="90" y="100" width="50" height="60" fill="#c9c9c9"/>
+  <text x="115" y="135" text-anchor="middle" font-size="9" fill="#333">ESP32</text>
+  <text x="115" y="40" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">HW-458B</text>
+  <text x="115" y="54" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">ESP-WROOM-32</text>
+  <text x="115" y="68" text-anchor="middle" font-size="8" fill="#9fb3d9">TFT + Touch integriert</text>
+
+  <g font-size="9" fill="#1c2430">
+    <text x="25" y="87" text-anchor="end">3V3</text>
+    <text x="25" y="111" text-anchor="end">GND</text>
+    <text x="25" y="135" text-anchor="end" font-weight="700" fill="#3f7cac">IO22</text>
+  </g>
+  <g>
+    <circle cx="30" cy="83" r="2.5" fill="#c0392b"/>
+    <circle cx="30" cy="107" r="2.5" fill="#1c2430"/>
+    <circle cx="30" cy="131" r="2.5" fill="#3f7cac"/>
+  </g>
+
+  <!-- DHT11 module (extern) -->
+  <rect x="500" y="60" width="150" height="120" rx="4" fill="#fbf3ee" stroke="#e2b493"/>
+  <text x="575" y="80" text-anchor="middle" font-size="10" font-weight="700">DHT11 (extern)</text>
+  <text x="575" y="93" text-anchor="middle" font-size="8" fill="#6b7280">Erweiterungsanschluss „IO2"</text>
+  <circle cx="520" cy="115" r="3" fill="#c0392b"/><text x="530" y="119" font-size="9">VCC</text>
+  <circle cx="520" cy="135" r="3" fill="#1c2430"/><text x="530" y="139" font-size="9">GND</text>
+  <circle cx="520" cy="155" r="3" fill="#3f7cac"/><text x="530" y="159" font-size="9">DATA</text>
+
+  <!-- Wires -->
+  <path class="wire-hit" data-wire="w1" d="M30,83 C 260,83 260,115 500,115"/>
+  <path class="wire" data-wire="w1" data-from="3.3V" data-to="DHT11 VCC" d="M30,83 C 260,83 260,115 500,115" fill="none" stroke="#c0392b" stroke-width="1.6"/>
+  <path class="wire-hit" data-wire="w2" d="M30,107 C 270,107 270,135 500,135"/>
+  <path class="wire" data-wire="w2" data-from="GND" data-to="DHT11 GND" d="M30,107 C 270,107 270,135 500,135" fill="none" stroke="#1c2430" stroke-width="1.6"/>
+  <path class="wire-hit" data-wire="w3" d="M30,131 C 280,131 280,155 500,155"/>
+  <path class="wire" data-wire="w3" data-from="IO22" data-to="DHT11 DATA" d="M30,131 C 280,131 280,155 500,155" fill="none" stroke="#3f7cac" stroke-width="1.6"/>
+</svg>
+<div id="wireInfo" class="wire-info">Klicke auf einen Draht, um Start- und Zielpin anzuzeigen.</div>
+<script>
+(function () {
+  var svg = document.getElementById('wiringSvg');
+  var info = document.getElementById('wireInfo');
+  if (!svg || !info) return;
+  var wires = svg.querySelectorAll('.wire');
+
+  function clearSelection() {
+    wires.forEach(function (w) { w.classList.remove('active', 'dimmed'); });
+    info.textContent = 'Klicke auf einen Draht, um Start- und Zielpin anzuzeigen.';
+    info.classList.remove('active');
+  }
+
+  function selectWire(id) {
+    var wire = svg.querySelector('.wire[data-wire="' + id + '"]');
+    if (!wire) return;
+    if (wire.classList.contains('active')) { clearSelection(); return; }
+    wires.forEach(function (w) {
+      if (w === wire) { w.classList.add('active'); w.classList.remove('dimmed'); }
+      else { w.classList.add('dimmed'); w.classList.remove('active'); }
+    });
+    info.innerHTML = '<b>' + wire.dataset.from + '</b> &rarr; <b>' + wire.dataset.to + '</b>';
+    info.classList.add('active');
+  }
+
+  svg.addEventListener('click', function (e) {
+    var hit = e.target.closest('.wire, .wire-hit');
+    if (hit) selectWire(hit.dataset.wire);
+    else clearSelection();
+  });
+})();
+</script>
+
+<h2>Externer Anschluss: DHT11</h2>
+<p>Einziges tatsächlich per Hand zu verkabelndes Bauteil. Der
+Erweiterungsanschluss „IO2" stellt 4 Pins bereit: <code>GND</code>,
+<code>IO22</code>, <code>IO27</code>, <code>3.3V</code> - genutzt werden
+davon nur <code>GND</code>, <code>IO22</code> (DATA) und <code>3.3V</code>;
+<code>IO27</code> liegt am Anschluss an, ist aber aktuell ungenutzt.
+GPIO2 selbst (wörtlich in älteren Lastenheft-Fassungen genannt) ist die
+TFT-DC-Leitung und daher belegt - <code>IO22</code> ist der tatsächlich
+korrekte DATA-Pin.</p>
+
+<div class="callout">
+  <div class="callout-title">Onboard vs. extern</div>
+  TFT, Touch, RGB-Status-LED, Audio, Lichtsensor und SD-Kartenslot sind
+  fest auf der HW-458B-Platine verdrahtet - hier nur zur Pin-Referenz in
+  der Tabelle oben aufgeführt, keine eigene Verkabelung nötig und deshalb
+  ohne Draht im Schema. Nur der DHT11-Sensor wird tatsächlich extern
+  angeschlossen.
+</div>
+<figure style="margin:0 0 4mm 0;">
+  <img src="hw-458b-pinout-datenblatt.jpg" alt="Offizielles Produktbild des Verkäufers mit beschrifteter Pinbelegung der HW-458B-Platine" style="width:100%; max-width:170mm; height:auto; border:1px solid #e4e1d8; border-radius:4px;">
+  <figcaption style="font-size:9.5px; color:#6b7280; margin-top:1.5mm;">Offizielles Verkäufer-Produktbild (<code>docs/hw-458b-pinout-datenblatt.jpg</code>) - bestätigt Touch-, RGB-LED-, Audio-, Lichtsensor- und SD-Pins sowie den Erweiterungsanschluss „IO2" (GND/IO22/IO27/3.3V) direkt. Die TFT-SPI-Pins (MOSI/MISO/SCLK/CS/DC) sind hier nicht abgebildet - dafür gilt weiterhin nur die Bestätigung über das Referenzdesign LCDWIKI E32R28T/E32N28T.</figcaption>
+</figure>
+<div class="callout warn">
+  <div class="callout-title">RGB-LED-Polarität angenommen</div>
+  Das Datenblatt spezifiziert nicht, ob die RGB-LED gemeinsame Anode oder
+  Kathode hat - <code>LedManager</code> nimmt HIGH=an (gemeinsame Kathode)
+  an. Falls am eigenen Board falsch, ist nur die Polarität in
+  <code>LedManager::setColor</code> zu invertieren.
+</div>
+
+<h2>Vermiedene / ungenutzte Pins</h2>
+<p>Laut Datenblatt auf dem Board vorhanden, aktuell von der Firmware nicht
+genutzt: <code>IO26</code> (Audio), <code>IO34</code>
+(Lichtsensor, ohnehin nur Input-only), <code>IO5</code> (SD-Card-Detect),
+<code>IO23</code> (SD CMD), <code>IO18</code> (SD CLK), <code>IO19</code>
+(SD DAT0). Details siehe <code>docs/entscheidungen.md</code> und
+<code>firmware/include/pins.h</code>.</p>
+
+<footer>
+  Sensormeter Display — Verdrahtungsplan (interaktiv, Pinbelegung laut firmware/include/pins.h) · github.com/peterhagelhof7-cmd/sensormeter-display ·
+  Entwickelt mit Unterstützung von Claude (Anthropic) als Coding-Assistent
+</footer>
+
+</body>
+</html>
