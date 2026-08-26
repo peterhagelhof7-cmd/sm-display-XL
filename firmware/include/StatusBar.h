@@ -16,18 +16,18 @@ public:
 	// Trefferbereich des Zahnrad-Symbols, fuer den Touch-Test in main.cpp
 	// (oeffnet SettingsUI). Zentral hier definiert, damit Zeichnung und
 	// Treffertest nicht auseinanderlaufen koennen.
-	static constexpr int16_t kGearHitX = 2;
-	static constexpr int16_t kGearHitY = 2;
-	static constexpr int16_t kGearHitW = 32;
-	static constexpr int16_t kGearHitH = 32;
+	static constexpr int16_t kGearHitX = 4;
+	static constexpr int16_t kGearHitY = 4;
+	static constexpr int16_t kGearHitW = 64;
+	static constexpr int16_t kGearHitH = 64;
 
 	// Info-Symbol ("i"): oeffnet InfoUI (Systemname/IP/DHCP-Static). Rechts
 	// neben dem WLAN-Symbol platziert (das reicht bis x=44+2*8+6=66), mit
 	// etwas Abstand.
-	static constexpr int16_t kInfoHitX = 76;
-	static constexpr int16_t kInfoHitY = 2;
-	static constexpr int16_t kInfoHitW = 32;
-	static constexpr int16_t kInfoHitH = 32;
+	static constexpr int16_t kInfoHitX = 152;
+	static constexpr int16_t kInfoHitY = 4;
+	static constexpr int16_t kInfoHitW = 64;
+	static constexpr int16_t kInfoHitH = 64;
 
 	// showBottomBar=false laesst die untere Leiste komplett weg (Static-Modus
 	// mit Datenquelle "Uhrzeit" - siehe lastenheft.txt Abschnitt 6.2).

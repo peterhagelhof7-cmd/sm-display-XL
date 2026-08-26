@@ -17,11 +17,11 @@ void StatusBar::drawGearIcon(TFT_eSPI &tft, int16_t cx, int16_t cy, int16_t r, u
 	// bei der kleinen Symbolgroesse zu grazil/schwer erkennbar) - massiver
 	// Ring mit ausgeschnittener Mitte, Zaehne als kleine gefuellte Rechtecke.
 	tft.fillCircle(cx, cy, r, kIconColor);
-	tft.fillCircle(cx, cy, r - 5, bgColor);
+	tft.fillCircle(cx, cy, r - 10, bgColor);
 
 	constexpr int8_t kTeeth = 8;
-	constexpr int16_t kToothLen = 4;
-	constexpr int16_t kToothHalfWidth = 2;
+	constexpr int16_t kToothLen = 8;
+	constexpr int16_t kToothHalfWidth = 4;
 	for (int8_t i = 0; i < kTeeth; i++) {
 		float angle = i * (2.0f * PI / kTeeth);
 		float cosA = cosf(angle);
@@ -47,18 +47,18 @@ void StatusBar::drawWifiIcon(TFT_eSPI &tft, int16_t x, int16_t y, int8_t bars) c
 		}
 		bars = 3; // Umriss aller 3 Balken beim Blinken anzeigen
 		for (int8_t b = 0; b < 3; b++) {
-			int16_t bh = 5 + b * 5;
-			tft.drawRect(x + b * 8, y + 16 - bh, 6, bh, kIconColor);
+			int16_t bh = 10 + b * 10;
+			tft.drawRect(x + b * 16, y + 32 - bh, 12, bh, kIconColor);
 		}
 		return;
 	}
 	for (int8_t b = 0; b < 3; b++) {
-		int16_t bh = 5 + b * 5;
-		int16_t by = y + 16 - bh;
+		int16_t bh = 10 + b * 10;
+		int16_t by = y + 32 - bh;
 		if (b < bars) {
-			tft.fillRect(x + b * 8, by, 6, bh, kIconColor);
+			tft.fillRect(x + b * 16, by, 12, bh, kIconColor);
 		} else {
-			tft.drawRect(x + b * 8, by, 6, bh, kIconColor);
+			tft.drawRect(x + b * 16, by, 12, bh, kIconColor);
 		}
 	}
 }
@@ -68,7 +68,9 @@ void StatusBar::drawInfoIcon(TFT_eSPI &tft, int16_t cx, int16_t cy, int16_t r, u
 	tft.setTextColor(kIconColor, bgColor);
 	tft.setTextDatum(MC_DATUM);
 	tft.setTextFont(4);
-	tft.drawString("i", cx, cy + 1);
+	tft.setTextSize(2);
+	tft.drawString("i", cx, cy + 2);
+	tft.setTextSize(1);
 	tft.setTextDatum(TL_DATUM);
 }
 
@@ -106,9 +108,9 @@ void StatusBar::draw(DisplayManager &display, WlanManager &wlan, bool sensorVali
 	tft.fillRect(0, 0, DisplayManager::kScreenWidth, Layout::kStatusBarHeight, bgColor);
 	tft.drawFastHLine(0, Layout::kStatusBarHeight - 1, DisplayManager::kScreenWidth, kIconColor);
 
-	drawGearIcon(tft, 18, Layout::kStatusBarHeight / 2, 11, bgColor);
-	drawWifiIcon(tft, 44, Layout::kStatusBarHeight / 2 - 8, bars);
-	drawInfoIcon(tft, 92, Layout::kStatusBarHeight / 2, 11, bgColor);
+	drawGearIcon(tft, 36, Layout::kStatusBarHeight / 2, 22, bgColor);
+	drawWifiIcon(tft, 88, Layout::kStatusBarHeight / 2 - 16, bars);
+	drawInfoIcon(tft, 184, Layout::kStatusBarHeight / 2, 22, bgColor);
 
 	// Warnschwellwert-Quelle ("Intern"/"Sensormeter"/"Ping"): dauerhaft
 	// (nicht blinkend) angezeigt, damit auch waehrend der weissen Phase des
@@ -119,15 +121,19 @@ void StatusBar::draw(DisplayManager &display, WlanManager &wlan, bool sensorVali
 		tft.setTextColor(alertBlue ? TFT_BLUE : TFT_RED, bgColor);
 		tft.setTextDatum(ML_DATUM);
 		tft.setTextFont(2);
-		tft.drawString(alertSource, 110, Layout::kStatusBarHeight / 2);
+		tft.setTextSize(2);
+		tft.drawString(alertSource, 220, Layout::kStatusBarHeight / 2);
+		tft.setTextSize(1);
 	}
 
 	tft.setTextColor(kIconColor, bgColor);
 	tft.setTextDatum(MR_DATUM);
 	tft.setTextFont(2);
+	tft.setTextSize(2);
 	String dhtText = sensorValid ? (String(tempRounded) + "C  " + String(humidityRounded) + "%")
 	                              : String("--C  --%");
-	tft.drawString(dhtText, DisplayManager::kScreenWidth - 8, Layout::kStatusBarHeight / 2);
+	tft.drawString(dhtText, DisplayManager::kScreenWidth - 16, Layout::kStatusBarHeight / 2);
+	tft.setTextSize(1);
 	tft.setTextDatum(TL_DATUM);
 
 	// --- untere Leiste: Uhrzeit/Datum (entfaellt im Static-Modus mit
@@ -142,11 +148,13 @@ void StatusBar::draw(DisplayManager &display, WlanManager &wlan, bool sensorVali
 	tft.setTextColor(kIconColor, bgColor);
 	tft.setTextDatum(ML_DATUM);
 	tft.setTextFont(4);
-	tft.drawString(timeHHMM.isEmpty() ? "--:--" : timeHHMM, 8, barY + Layout::kStatusBarHeight / 2);
+	tft.setTextSize(2);
+	tft.drawString(timeHHMM.isEmpty() ? "--:--" : timeHHMM, 16, barY + Layout::kStatusBarHeight / 2);
 
 	tft.setTextDatum(MR_DATUM);
 	tft.setTextFont(2);
-	tft.drawString(dateLine, DisplayManager::kScreenWidth - 8, barY + Layout::kStatusBarHeight / 2);
+	tft.drawString(dateLine, DisplayManager::kScreenWidth - 16, barY + Layout::kStatusBarHeight / 2);
+	tft.setTextSize(1);
 	tft.setTextDatum(TL_DATUM);
 	tft.setTextColor(TFT_BLACK, bgColor);
 }

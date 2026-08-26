@@ -17,11 +17,14 @@ void ClockView::draw(DisplayManager &display, int16_t contentTop, int16_t conten
 	int16_t timeAreaH = (h * 2) / 3;
 	int16_t timeMidY = contentTop + timeAreaH / 2;
 	tft.setTextFont(7);
+	tft.setTextSize(3);  // 800x480: grosse 7-Segment-Uhr
 	tft.drawString(time.isEmpty() ? "--:--" : time, DisplayManager::kScreenWidth / 2, timeMidY);
 
 	int16_t dateMidY = contentTop + timeAreaH + (h - timeAreaH) / 2;
 	tft.setTextFont(4);
+	tft.setTextSize(2);
 	tft.drawString(date.isEmpty() ? "Kein NTP-Sync" : date, DisplayManager::kScreenWidth / 2, dateMidY);
 
+	tft.setTextSize(1);
 	tft.setTextDatum(TL_DATUM);
 }
