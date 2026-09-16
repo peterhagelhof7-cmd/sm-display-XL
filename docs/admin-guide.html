@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Sensormeter Display — Admin-Guide</title>
+<title>Sensormeter Display XL — Admin-Guide</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
@@ -148,20 +148,20 @@
       <line x1="24" y1="24.67" x2="31.07" y2="17.6" stroke="#E9E4D8" stroke-width="2.8" stroke-linecap="round"/>
       <circle cx="24" cy="24.67" r="2.6" fill="#E9E4D8"/>
     </svg>
-    <h1>SENSORMETER DISPLAY</h1>
+    <h1>SENSORMETER DISPLAY XL</h1>
   </div>
   <div class="subtitle">Admin-Guide — Inbetriebnahme, Touch-Bedienung und Konfiguration über die Weboberfläche</div>
   <div class="badges">
-    <span class="badge badge-orange">v0.9.0-rc4 · Beta</span>
-    <span class="badge">HW-458B · ESP32</span>
+    <span class="badge badge-orange">v1.0.0</span>
+    <span class="badge">ESP32-8048S070C · ESP32-S3 · 7"</span>
     <span class="badge">Touch-UI · Webserver · Branding · OTA</span>
-    <span class="badge">github.com/peterhagelhof7-cmd/sensormeter-display</span>
+    <span class="badge">github.com/peterhagelhof7-cmd/sm-display-XL</span>
   </div>
 </div>
 
 <div class="toc">
   <div class="toc-row"><a href="#sec1">1. Erste Inbetriebnahme (Auspacken, Anschließen, Flashen)</a></div>
-  <div class="toc-row"><a href="#sec2">2. Erststart am Gerät (Kalibrierung, WLAN)</a></div>
+  <div class="toc-row"><a href="#sec2">2. Erststart am Gerät (WLAN-Einrichtung)</a></div>
   <div class="toc-row"><a href="#sec3">3. Statusleisten (oben/unten)</a></div>
   <div class="toc-row"><a href="#sec4">4. Datenquellen (Screens)</a></div>
   <div class="toc-row"><a href="#sec5">5. Einstellungen-Menü (Touch)</a></div>
@@ -176,13 +176,13 @@
 <h1 class="section" id="sec1"><span class="num">1</span>Erste Inbetriebnahme</h1>
 
 <h2>1.1 Auspacken &amp; Hardware-Übersicht</h2>
-<p>Das Board (HW-458B) besteht aus einem ESP-WROOM-32-Modul mit fest verbautem
-2,8"-TFT-Display (ST7789P3, 240×320, resistiver Touch) auf einer Trägerplatine.
+<p>Das Board (ESP32-8048S070C) besteht aus einem ESP32-S3-Modul mit fest verbautem
+7"-800×480-RGB-Display und kapazitivem GT911-Touch auf einer Trägerplatine.
 Im Lieferumfang üblicherweise enthalten:</p>
 <ul>
   <li>Das Display-Board selbst</li>
-  <li>Ein USB-Kabel (Micro-USB oder USB-C, je nach Revision) zum Programmieren/Stromversorgen</li>
-  <li>Optional: DHT11-Sensor mit Kabel (wird am Erweiterungsanschluss <span class="code">IO2</span> / GPIO22 angeschlossen)</li>
+  <li>Ein USB-Kabel (Stromversorgung + Flashen über den CH340/UART0)</li>
+  <li>Optional: DHT11-Sensor mit Kabel (wird am P4-Erweiterungsanschluss / <span class="code">GPIO18</span> angeschlossen)</li>
 </ul>
 <div class="callout">
   <div class="callout-title">Hinweis</div>
@@ -200,90 +200,53 @@ vom Chip-Hersteller herunterladen und muss einmalig installiert werden.
 Nach der Installation im Geräte-Manager unter „Anschlüsse (COM &amp; LPT)“
 prüfen, ob ein neuer Port (z. B. <span class="code">COM5</span>) erscheint.</p>
 
-<h2>1.3 PowerShell-Skript ausführen</h2>
-<p>Das Skript <span class="code">scripts/flash.ps1</span> übernimmt die
-komplette Einrichtung: es fragt zuerst, welches der drei
-Sensormeter-Projekte geflasht werden soll (dasselbe Skript liegt identisch
-in allen drei Repos), installiert dann fehlende Werkzeuge (Python, Git,
-PlatformIO), holt den Quellcode und baut/flasht die Firmware — ganz ohne
-manuelle Vorbereitung.</p>
-<h3>Vorgehen</h3>
+<h2>1.3 Firmware flashen (Web-Flasher, empfohlen)</h2>
+<p>Die einfachste Variante — auch für ein fabrikneues, leeres Board — ist der
+<b>Web-Flasher</b> der Sensormeter-Familie. Er flasht direkt aus dem Browser
+(Chrome, Edge oder Opera am Desktop; Web Serial nötig), ganz ohne Tool-Setup:</p>
+<pre class="code-block">https://peterhagelhof7-cmd.github.io/sensormeter-family/</pre>
 <ol>
-  <li>PowerShell öffnen (Start-Menü → „PowerShell“ eintippen)</li>
-  <li>In das gewünschte Zielverzeichnis wechseln oder das Skript direkt aus
-      einem bereits vorhandenen Checkout heraus starten</li>
-  <li>Skript ausführen und bei der Projektabfrage <b>3</b> (Sensormeter
-      Display) wählen, oder direkt mit <span class="code">-Project
-      display</span> aufrufen:</li>
+  <li>Board per USB anstecken (CH340-COM-Port muss erkannt sein, siehe 1.2)</li>
+  <li>Auf der Seite die Kachel <b>„Sensormeter Display XL — 7"“</b> wählen und
+      auf „7"-Firmware (XL) flashen“ klicken</li>
+  <li>Im Port-Dialog den CH340-Port des Boards auswählen</li>
 </ol>
-<pre class="code-block">.\flash.ps1 -Project display</pre>
-<p>Das Skript prüft nacheinander, ob Python, Git und PlatformIO vorhanden und
-tatsächlich funktionsfähig sind (nicht nur, ob ein Befehl mit diesem Namen
-existiert — Windows legt z. B. einen „python“-Store-Alias an, der keine
-echte Installation ist) und installiert bei Bedarf automatisch nach
-(über <span class="code">winget</span>/<span class="code">pip</span>). Danach
-wird das Repository geklont (oder aktualisiert, falls schon vorhanden) und
-die Firmware gebaut.</p>
+<p>Bootloader, Partitionstabelle und Anwendung werden komplett geflasht.</p>
 
-<h3>Nützliche Parameter</h3>
-<table>
-  <tr><th>Parameter</th><th>Wirkung</th></tr>
-  <tr><td><span class="code">-Project display</span></td><td>Projekt direkt angeben, ohne die interaktive Abfrage (alternativ <span class="code">sensormeter</span> oder <span class="code">wlan</span>)</td></tr>
-  <tr><td><span class="code">-RepoPath &lt;Pfad&gt;</span></td><td>Zielordner für den Checkout (Default: Ordner „sensormeter-display“ neben dem Skript)</td></tr>
-  <tr><td><span class="code">-Port COM5</span></td><td>Seriellen Port fest vorgeben, falls die automatische Erkennung fehlschlägt oder mehrere Boards angeschlossen sind</td></tr>
-  <tr><td><span class="code">-SkipUpload</span></td><td>Nur bauen, nicht flashen — z. B. um vorab zu prüfen, ob alles kompiliert, ohne dass ein Board angeschlossen sein muss</td></tr>
-</table>
-<pre class="code-block">.\flash.ps1 -Project display -Port COM5
-.\flash.ps1 -Project display -RepoPath C:\Projekte\sensormeter-display -SkipUpload</pre>
-
-<h2>1.4 Flashen</h2>
-<p>Ohne <span class="code">-SkipUpload</span> schließt das Skript direkt mit
-dem eigentlichen Flash-Vorgang ab (<span class="code">pio run --target
-upload</span>). Das Skript listet vorab alle erkannten seriellen Ports auf
-Windows-Text-Ausgabe. Bei Erfolg erscheint:</p>
-<pre class="code-block">Fertig! Firmware erfolgreich geflasht.
-Beim ersten Start: Touch-Kalibrierung durchfuehren, dann WLAN einrichten (siehe README.md).</pre>
+<h2>1.4 Alternative: aus dem Quellcode (PlatformIO)</h2>
+<p>Wer aus dem Quellcode bauen möchte, nutzt PlatformIO direkt aus dem
+<span class="code">firmware/</span>-Ordner des Repos:</p>
+<pre class="code-block">cd firmware
+pio run                     # bauen
+pio run --target upload     # flashen (über CH340/UART0)
+pio device monitor          # serieller Log (115200 Baud)</pre>
+<p>Beim ersten Start geht das Gerät direkt in die WLAN-Einrichtung (der
+kapazitive GT911-Touch braucht keine Kalibrierung).</p>
 <div class="callout warn">
   <div class="callout-title">Bei Fehlschlag</div>
   Häufigste Ursachen: CH340-Treiber fehlt, falscher COM-Port (Liste oben
   prüfen, ggf. mit <span class="code">-Port COM&lt;n&gt;</span> erneut
   versuchen), oder das Board ist nicht angeschlossen/im falschen Modus.
   Bei manchen Boards muss während des Flashens eine BOOT-Taste gehalten
-  werden — bei HW-458B in der Regel nicht nötig.
+  werden — beim ESP32-8048S070C in der Regel nicht nötig.
 </div>
 
 <!-- ============================================================ -->
 <h1 class="section" id="sec2"><span class="num">2</span>Erststart am Gerät</h1>
 
-<p>Nach dem ersten Flashen durchläuft das Gerät automatisch zwei
-Einrichtungsschritte, bevor der Normalbetrieb beginnt: Touch-Kalibrierung
-und WLAN-Einrichtung. Beide Schritte laufen nur einmal — die Ergebnisse
-werden im Flash-Speicher (NVS) gespeichert und bei jedem weiteren Start
-automatisch geladen.</p>
+<p>Nach dem ersten Flashen durchläuft das Gerät automatisch die
+WLAN-Einrichtung, bevor der Normalbetrieb beginnt. Sie läuft nur einmal — die
+Zugangsdaten werden im Flash-Speicher (NVS) gespeichert und bei jedem weiteren
+Start automatisch geladen.</p>
 
-<h2>2.1 Touch-Kalibrierung</h2>
-<p>Das Gerät zeigt nacheinander vier Bildschirme mit je einem roten
-Fadenkreuz in einer Ecke. Jede Ecke <b>antippen und kurz halten</b> (nicht
-nur kurz antippen — der Sensor braucht eine kurze Setzzeit, um einen
-stabilen Messwert zu bekommen).</p>
-<div class="sketch-wrap">
-  <div class="device"><div class="screen">
-    <div class="sk-title">Kalibrierung: oben-links antippen und halten</div>
-    <div class="sk-crosshair" style="left:8mm; top:6mm;"></div>
-  </div></div>
-  <div class="sketch-notes">
-    <p><b>Reihenfolge:</b> oben-links → oben-rechts → unten-links →
-    unten-rechts.</p>
-    <ul>
-      <li>Ziele liegen bewusst etwas von den echten Bildschirmkanten
-      entfernt (besser treffbar)</li>
-      <li>Nach allen vier Punkten: „Kalibrierung gespeichert.“</li>
-      <li>Danach direkt weiter zur WLAN-Einrichtung</li>
-    </ul>
-  </div>
+<div class="callout">
+  <div class="callout-title">Keine Touch-Kalibrierung nötig</div>
+  Anders als der resistive Touch der 2,8"-Variante arbeitet der kapazitive
+  GT911-Touch des XL-Boards ohne Kalibrierung — das Gerät geht nach dem Start
+  direkt zur WLAN-Einrichtung.
 </div>
 
-<h2>2.2 WLAN-Ersteinrichtung</h2>
+<h2>2.1 WLAN-Ersteinrichtung</h2>
 <p>Das Gerät scannt automatisch nach WLAN-Netzen und zeigt eine Liste,
 sortiert nach Empfangsstärke.</p>
 <div class="sketch-wrap">
@@ -374,8 +337,11 @@ Inhaltsbereich der aktiven Datenquelle.</p>
     <p><b>Untere Leiste:</b> Uhrzeit (groß) und Wochentag/Datum. Entfällt,
     wenn im Static-Modus die Datenquelle „Uhrzeit“ gewählt ist (die Ansicht
     nutzt den Platz dann selbst).</p>
-    <p>Bei anhaltendem Ping-Ausfall (&gt;1 Minute) wechselt der gesamte
-    Bildschirmhintergrund auf Rot, zusätzlich blinkt die RGB-Status-LED rot.</p>
+    <p>Bei anhaltendem Ping-Ausfall (&gt;1 Minute) bzw. verletztem Warnschwellwert
+    wechselt der gesamte Bildschirmhintergrund auf Rot (bzw. Blau bei
+    Unterschreitung). Die Warnung ist entprellt (Hysterese) und wird zusätzlich
+    im Ereignisprotokoll festgehalten. (Das XL-Board hat keine Status-LED — der
+    Alarm ist nur über die Bildschirmfärbung sichtbar.)</p>
   </div>
 </div>
 
@@ -794,15 +760,13 @@ den gewählten Umfang noch einmal):</p>
 <div class="keep">
 <table>
   <tr><th>Umfang</th><th>Wirkung</th></tr>
-  <tr><td>Alles</td><td>Setzt Systemname, Web-Passwort, Betriebsmodus, Sensormeter-/Ping-Ziele samt Schwellwerten und DHT11-Kalibrierung auf Werkswerte zurück, löscht die gespeicherten WLAN-Zugangsdaten (Gerät startet danach im Onboarding, Abschnitt 2.2), löscht den 12h-Verlauf <b>und</b> das Anbieter-Logo. Nicht rückgängig zu machen.</td></tr>
+  <tr><td>Alles</td><td>Setzt Systemname, Web-Passwort, Betriebsmodus, Sensormeter-/Ping-Ziele samt Schwellwerten und DHT11-Kalibrierung auf Werkswerte zurück, löscht die gespeicherten WLAN-Zugangsdaten (Gerät startet danach im Onboarding, Abschnitt 2.1), löscht den 12h-Verlauf <b>und</b> das Anbieter-Logo. Nicht rückgängig zu machen.</td></tr>
   <tr><td>Nur Konfiguration</td><td>Wie oben (inkl. WLAN-Zugangsdaten), aber ohne den 12h-Verlauf und ohne Branding zu löschen — der Anbietername bleibt erhalten, das Logo ebenfalls.</td></tr>
   <tr><td>Nur Messwerte</td><td>Löscht ausschließlich den 12h-DHT11-Verlauf. Konfiguration, WLAN und Branding bleiben vollständig unangetastet.</td></tr>
   <tr><td>Nur Anbieter-Branding</td><td>Setzt nur den Anbietername zurück und entfernt ein hinterlegtes Logo (identisch zum Logo-Löschen-Button, Abschnitt 7.5). Alle übrigen Einstellungen bleiben unangetastet.</td></tr>
 </table>
-<p style="font-size:11px; color:#6b6559;">Die Touch-Kalibrierung (Abschnitt
-2.1) ist von <b>keinem</b> Umfang betroffen — sie ist eine physische
-Geräte-/Bildschirmkalibrierung, kein Konfigurationswert. Zum erneuten
-Kalibrieren siehe Anhang, „Touch reagiert ungenau".</p>
+<p style="font-size:11px; color:#6b6559;">Der kapazitive GT911-Touch braucht
+keine Kalibrierung und ist von keinem Werksreset-Umfang betroffen.</p>
 <p style="font-size:11px; color:#6b6559;">Anders als bei den drei
 OLED-Geschwisterprojekten gibt es hier <b>kein</b> XML-Konfigurationsdokument
 (Einstellungen liegen einzeln in NVS/Preferences) — daher auch kein
@@ -876,11 +840,12 @@ USB-Kabel neu.</p>
 
 <!-- ============================================================ -->
 <h1 class="section" id="sec9"><span class="num">9</span>Serial-Kommandozeile (USB)</h1>
-<p>Zusätzlich zur Weboberfläche lässt sich das Gerät direkt über die
-USB-Verbindung steuern — ohne Netzwerkzugriff, ohne Passwort. Praktisch,
-wenn das Gerät nur per USB, aber nicht per Netzwerk erreichbar ist (z. B.
-falsche WLAN-Zugangsdaten, statische IP in einem fremden Netzsegment).
-Baudrate 115200, jede Zeile mit Enter abschließen.</p>
+<p>Zusätzlich zur Weboberfläche lässt sich das Gerät direkt über die serielle
+Verbindung steuern — ohne Netzwerkzugriff, ohne Passwort. Praktisch, wenn das
+Gerät nur seriell, aber nicht per Netzwerk erreichbar ist (z. B. falsche
+WLAN-Zugangsdaten, statische IP in einem fremden Netzsegment). Die Konsole
+läuft über <b>UART0/CH340</b> (nicht die native USB-Buchse — die belegt der
+GT911-Touch). Baudrate 115200, jede Zeile mit Enter abschließen.</p>
 
 <div class="callout">
   <div class="callout-title">Gleiches Vertrauensmodell wie bei den Geschwisterprojekten</div>
@@ -899,13 +864,12 @@ XML-Konfigurationsdokument, siehe Abschnitt 7.3 „Werksreset".</p>
   <tr><td><span class="code">status</span></td><td>Aktuellen Zustand ausgeben (WLAN-Status, IP, Signal, DHT11-Messwert, freier Heap, Laufzeit) — rein lesend, kein Neustart</td></tr>
   <tr><td><span class="code">dhcp</span></td><td>WLAN auf DHCP umstellen, statische IP/Maske/Gateway löschen, Gerät startet neu</td></tr>
   <tr><td><span class="code">ip &lt;adresse&gt; &lt;maske&gt; &lt;gateway&gt;</span></td><td>Statische IP setzen, Gerät startet neu. Anders als die Einstellungsseite ohne Ping-Kollisionsprüfung — bewusst einfach gehalten. Kein DNS-Feld (WlanManager kennt keine separate DNS-Konfiguration)</td></tr>
-  <tr><td><span class="code">wifi &lt;ssid&gt; &lt;passwort&gt;</span></td><td>Neue WLAN-Zugangsdaten setzen, Gerät startet neu und verbindet sich damit (wie das Onboarding, Abschnitt 2.2)</td></tr>
+  <tr><td><span class="code">wifi &lt;ssid&gt; &lt;passwort&gt;</span></td><td>Neue WLAN-Zugangsdaten setzen, Gerät startet neu und verbindet sich damit (wie das Onboarding, Abschnitt 2.1)</td></tr>
   <tr><td><span class="code">reset</span></td><td>Werksreset nur der Konfiguration (wie Umfang „Nur Konfiguration" auf der Einstellungsseite, inkl. WLAN-Zugangsdaten, allerdings ohne dessen Branding-Erhalt — der Anbietername wird mit zurückgesetzt), Gerät startet neu — der 12h-Verlauf bleibt erhalten</td></tr>
   <tr><td><span class="code">reset all</span></td><td>Wie oben, zusätzlich werden der 12h-Verlauf und das Anbieter-Logo gelöscht. Nicht rückgängig zu machen</td></tr>
 </table>
-<p class="hint">Die Touch-Kalibrierung ist von keinem der beiden
-Reset-Kommandos betroffen (physische Geräte-/Bildschirmkalibrierung, kein
-Konfigurationswert) — siehe Abschnitt 7.3.</p>
+<p class="hint">Der kapazitive GT911-Touch braucht keine Kalibrierung und ist
+von keinem Reset-Kommando betroffen.</p>
 
 <h2>9.2 Nutzung mit Windows-Boardmitteln (ohne Zusatzsoftware)</h2>
 <p>Für einen seriellen Terminal wird üblicherweise ein Zusatzprogramm wie
@@ -964,7 +928,7 @@ $port.Close()</pre>
   <tr><th>Problem</th><th>Mögliche Ursache / Lösung</th></tr>
   <tr><td>Board wird von Windows nicht erkannt</td><td>CH340-USB-Treiber fehlt — installieren, danach Geräte-Manager prüfen</td></tr>
   <tr><td>Flash-Vorgang schlägt fehl</td><td>Falscher COM-Port (<span class="code">-Port COM&lt;n&gt;</span> angeben), Board nicht angeschlossen, oder anderes Programm blockiert den seriellen Port (z. B. offener serieller Monitor)</td></tr>
-  <tr><td>Touch reagiert ungenau</td><td>Kalibrierung über einen Werksreset (kompletter Flash-Löschvorgang) erneut auslösen, dann beim Kalibrieren jede Ecke wirklich <b>halten</b>, nicht nur antippen</td></tr>
+  <tr><td>Touch reagiert nicht / unzuverlässig</td><td>Kapazitiver GT911-Touch braucht keine Kalibrierung. Glasoberfläche säubern, festen Sitz des Displaykabels prüfen; hilft das nicht, Firmware neu flashen (Web-Flasher)</td></tr>
   <tr><td>WLAN-Symbol blinkt dauerhaft</td><td>Kein WLAN verbunden — über Systemeinstellungen → WLAN neu wählen erneut einrichten</td></tr>
   <tr><td>Bildschirm bleibt komplett rot</td><td>Ping zu google.com schlägt seit über 1 Minute fehl — Internetverbindung/Router prüfen</td></tr>
   <tr><td>Webinterface nicht erreichbar</td><td>IP-Adresse über den Info-Dialog am Gerät prüfen; bei kürzlich geänderter Static-IP ggf. neue Adresse verwenden</td></tr>
@@ -973,7 +937,7 @@ $port.Close()</pre>
 </table>
 
 <p style="margin-top:8mm; font-size:10px; color:#6b7280;">
-Sensormeter Display — Admin-Guide · github.com/peterhagelhof7-cmd/sensormeter-display ·
+Sensormeter Display XL — Admin-Guide · github.com/peterhagelhof7-cmd/sm-display-XL ·
 Entwickelt mit Unterstützung von Claude (Anthropic) als Coding-Assistent
 </p>
 
