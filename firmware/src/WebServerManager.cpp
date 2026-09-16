@@ -1,6 +1,7 @@
 #include "WebServerManager.h"
 
 #include <ESP32Ping.h>
+#include <LittleFS.h>
 #include <Update.h>
 #include <math.h>
 #include <new>
@@ -1195,7 +1196,19 @@ String WebServerManager::buildSettingsPage(bool saved) const {
 	// --- Konfiguration exportieren ---
 	html += "<fieldset><legend>Konfiguration</legend>";
 	html += "<p class=\"hint\">Alle Einstellungen als Textdatei sichern (Backup/Dokumentation).</p>";
-	html += "<a href=\"/settings/export\"><button type=\"button\">Konfiguration herunterladen</button></a>";
+	html += "<form method=\"GET\" action=\"/settings/export\" style=\"display:inline\">"
+	        "<button type=\"submit\">Konfiguration herunterladen</button></form>";
+	html += "</fieldset>";
+
+	// --- Warn-Ereignisse (events.txt) ---
+	html += "<fieldset><legend>Warn-Ereignisse</legend>";
+	html += "<p class=\"hint\">Protokoll aller Warnmeldungen (Rot/Blau-Blinken der Anzeige) mit "
+	        "Zeitstempel - z.B. um Ausfaelle/Schwellwert-Verletzungen nachzuvollziehen.</p>";
+	html += "<form method=\"GET\" action=\"/settings/events\" style=\"display:inline\">"
+	        "<button type=\"submit\">Ereignisse herunterladen</button></form> ";
+	html += "<form method=\"POST\" action=\"/settings/events/clear\" style=\"display:inline\" "
+	        "onsubmit=\"return confirm('Ereignis-Protokoll wirklich leeren?')\">"
+	        "<button type=\"submit\">Protokoll leeren</button></form>";
 	html += "</fieldset>";
 
 	// --- Werksreset (Umfangsauswahl, siehe docs/entscheidungen.md) ---
@@ -1588,7 +1601,13 @@ void WebServerManager::begin() {
 	server_.on("/api/display", HTTP_GET, [this](AsyncWebServerRequest *request) {
 		request->send(200, "application/json", buildDisplayJson());
 	});
-	server_.on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
+	// WICHTIG: exact() statt String-URI. Ein einfacher String-URI bekommt in
+	// dieser ESPAsyncWebServer-Version den Match-Typ BackwardCompatible
+	// (^/settings(/.*)?$) und wuerde als zuerst registrierter Handler auch
+	// /settings/export und /settings/events verschlucken -> Download lieferte
+	// die Settings-Seite statt der Datei. Exaktes Matching haelt die
+	// Unterpfad-Routen frei.
+	server_.on(AsyncURIMatcher::exact("/settings"), HTTP_GET, [this](AsyncWebServerRequest *request) {
 		if (!checkAuth(request)) return;
 		request->send(200, "text/html", buildSettingsPage(request->hasParam("saved")));
 	});
@@ -1597,6 +1616,24 @@ void WebServerManager::begin() {
 		AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", buildConfigExport());
 		response->addHeader("Content-Disposition", "attachment; filename=sensormeter-display-config.txt");
 		request->send(response);
+	});
+	// Warn-Ereignis-Protokoll (events.txt) herunterladen. Datei kommt vom
+	// EventLog (LittleFS) - hier nur als Download ausgeliefert.
+	server_.on("/settings/events", HTTP_GET, [this](AsyncWebServerRequest *request) {
+		if (!checkAuth(request)) return;
+		if (!LittleFS.exists("/events.txt")) {
+			request->send(200, "text/plain", "Noch keine Warn-Ereignisse aufgezeichnet.");
+			return;
+		}
+		AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/events.txt", "text/plain");
+		response->addHeader("Content-Disposition", "attachment; filename=sensormeter-display-events.txt");
+		request->send(response);
+	});
+	// Ereignis-Protokoll leeren.
+	server_.on("/settings/events/clear", HTTP_POST, [this](AsyncWebServerRequest *request) {
+		if (!checkAuth(request)) return;
+		LittleFS.remove("/events.txt");
+		request->redirect("/settings?saved=1");
 	});
 
 	server_.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSave(request); });

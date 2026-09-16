@@ -11,10 +11,10 @@
 
 namespace {
 constexpr int16_t kScreenW = DisplayManager::kScreenWidth;
-constexpr int16_t kCloseX = kScreenW - 34;
-constexpr int16_t kCloseY = 4;
-constexpr int16_t kCloseW = 28;
-constexpr int16_t kCloseH = 28;
+constexpr int16_t kCloseX = kScreenW - 74;
+constexpr int16_t kCloseY = 8;
+constexpr int16_t kCloseW = 64;
+constexpr int16_t kCloseH = 64;
 } // namespace
 
 void InfoUI::run(DisplayManager &display, TouchManager &touch, SettingsManager &settings, WlanManager &wlan) {
@@ -23,28 +23,30 @@ void InfoUI::run(DisplayManager &display, TouchManager &touch, SettingsManager &
 	tft.setTextColor(TFT_BLACK, TFT_WHITE);
 	tft.setTextDatum(TL_DATUM);
 	tft.setTextFont(4);
-	tft.drawString("Geraete-Info", 10, 6);
+	tft.drawString("Geraete-Info", 16, 12);
 	UiHelpers::drawCloseButton(tft, kCloseX, kCloseY, kCloseW, kCloseH);
 
-	tft.setTextFont(2);
-	tft.drawString("Systemname (im Webinterface aenderbar):", 10, 48);
+	// 800x480: Label/Wert-Bloecke ueber die Seite verteilt (Font 4 statt der
+	// alten 2,8"-Font-2-Labels), Blockschritt 84px.
 	tft.setTextFont(4);
-	tft.drawString(settings.deviceName(), 10, 66);
+	tft.drawString("Systemname (im Webinterface aenderbar):", 16, 96);
+	tft.setTextFont(4);
+	tft.drawString(settings.deviceName(), 16, 128);
 
-	tft.setTextFont(2);
-	tft.drawString("IP-Adresse:", 10, 94);
 	tft.setTextFont(4);
-	tft.drawString(WiFi.localIP().toString(), 10, 112);
+	tft.drawString("IP-Adresse:", 16, 180);
+	tft.setTextFont(4);
+	tft.drawString(WiFi.localIP().toString(), 16, 212);
 
-	tft.setTextFont(2);
-	tft.drawString("Verbindungsart:", 10, 140);
 	tft.setTextFont(4);
-	tft.drawString(wlan.hasStaticIp() ? "Statisch" : "DHCP (automatisch)", 10, 158);
+	tft.drawString("Verbindungsart:", 16, 264);
+	tft.setTextFont(4);
+	tft.drawString(wlan.hasStaticIp() ? "Statisch" : "DHCP (automatisch)", 16, 296);
 
-	tft.setTextFont(2);
-	tft.drawString("Firmware:", 10, 186);
 	tft.setTextFont(4);
-	tft.drawString(DEVICE_FIRMWARE_VERSION, 10, 204);
+	tft.drawString("Firmware:", 16, 348);
+	tft.setTextFont(4);
+	tft.drawString(DEVICE_FIRMWARE_VERSION, 16, 380);
 
 	while (true) {
 		int16_t x, y;

@@ -30,10 +30,13 @@ void PingView::drawAverage(DisplayManager &display, const PingManager &ping, int
 		char buf[8];
 		snprintf(buf, sizeof(buf), "%d", static_cast<int>(lroundf(ping.googleAverageLatencyMs())));
 		tft.setTextFont(7);
-		tft.drawString(buf, DisplayManager::kScreenWidth / 2 - 10, midY);
-		tft.setTextFont(2);
+		tft.setTextSize(2);  // 800x480: grosser Wert, analog zum Uhr-Slide
+		tft.setTextDatum(MR_DATUM);
+		tft.drawString(buf, DisplayManager::kScreenWidth / 2, midY);
+		tft.setTextSize(1);
+		tft.setTextFont(4);
 		tft.setTextDatum(ML_DATUM);
-		tft.drawString("ms  (google.com)", DisplayManager::kScreenWidth / 2 + 40, midY);
+		tft.drawString("ms  (google.com)", DisplayManager::kScreenWidth / 2 + 16, midY);
 	}
 	tft.setTextDatum(TL_DATUM);
 }
@@ -74,7 +77,7 @@ void PingView::drawTargetList(DisplayManager &display, const PingManager &ping, 
 	}
 
 	int16_t rowH = h / static_cast<int16_t>(count);
-	if (rowH > 40) rowH = 40;
+	if (rowH > 56) rowH = 56;
 
 	for (size_t i = 0; i < count; i++) {
 		int16_t y = contentTop + static_cast<int16_t>(i) * rowH;

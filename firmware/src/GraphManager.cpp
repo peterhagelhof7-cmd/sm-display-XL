@@ -142,7 +142,7 @@ void GraphManager::drawGraph(DisplayManager &display, int16_t x, int16_t y, int1
 
 	if (count < 2) {
 		tft.setTextDatum(MC_DATUM);
-		tft.setTextFont(2);
+		tft.setTextFont(4);
 		tft.drawString("Noch nicht genug Messwerte", x + w / 2, y + h / 2);
 		tft.setTextDatum(TL_DATUM);
 		return;
@@ -159,8 +159,8 @@ void GraphManager::drawGraph(DisplayManager &display, int16_t x, int16_t y, int1
 	if (tempMax == tempMin) tempMax++;
 	if (humMax == humMin) humMax++;
 
-	constexpr int16_t kMargin = 26; // Platz fuer Achsenbeschriftung links/rechts
-	constexpr int16_t kBottomMargin = 10; // Platz fuer Zeitachsenbeschriftung unten
+	constexpr int16_t kMargin = 40; // Platz fuer Achsenbeschriftung links/rechts (Font 2)
+	constexpr int16_t kBottomMargin = 18; // Platz fuer Zeitachsenbeschriftung unten (Font 2)
 	int16_t plotX = x + kMargin;
 	int16_t plotW = w - 2 * kMargin;
 	int16_t plotY = y + 4;
@@ -206,16 +206,16 @@ void GraphManager::drawGraph(DisplayManager &display, int16_t x, int16_t y, int1
 		drawDashedHLine(tft, plotX, plotX + plotW, clampToPlot(humPointY(humMaxThreshold)), TFT_BLUE);
 	}
 
-	tft.setTextFont(1);
+	tft.setTextFont(2);
 	tft.setTextDatum(TR_DATUM);
 	tft.setTextColor(TFT_RED, TFT_WHITE);
 	tft.drawString(String(tempMax) + "C", x + kMargin - 2, plotY);
-	tft.drawString(String(tempMin) + "C", x + kMargin - 2, plotY + plotH - 8);
+	tft.drawString(String(tempMin) + "C", x + kMargin - 2, plotY + plotH - 16);
 
 	tft.setTextDatum(TL_DATUM);
 	tft.setTextColor(TFT_BLUE, TFT_WHITE);
 	tft.drawString(String(humMax) + "%", x + w - kMargin + 2, plotY);
-	tft.drawString(String(humMin) + "%", x + w - kMargin + 2, plotY + plotH - 8);
+	tft.drawString(String(humMin) + "%", x + w - kMargin + 2, plotY + plotH - 16);
 
 	// Zeitachse: aeltester und neuester Messpunkt als Uhrzeit, damit
 	// erkennbar ist, ueber welchen Zeitraum der Verlauf geht (Ringpuffer
@@ -282,23 +282,26 @@ void GraphManager::drawFullScreen(DisplayManager &display, float currentTempC, f
 
 		tft.setTextDatum(MR_DATUM);
 		tft.setTextFont(7);
+		tft.setTextSize(2);  // 800x480: grosse Messwerte, analog zum Uhr-Slide
 		int16_t midY = valueAreaY + valueAreaH / 2;
-		tft.drawString(tempBuf, DisplayManager::kScreenWidth / 2 - 6, midY);
+		tft.drawString(tempBuf, DisplayManager::kScreenWidth / 2 - 8, midY);
 		// Eingebaute Fonts kennen kein "°" (nur ASCII 32-127) - stattdessen
 		// ein kleiner Kreis von Hand gezeichnet, gefolgt von "C".
-		int16_t degX = DisplayManager::kScreenWidth / 2 + 2;
-		int16_t degY = midY - 22;
-		tft.drawCircle(degX, degY, 3, TFT_BLACK);
-		tft.setTextFont(2);
+		int16_t degX = DisplayManager::kScreenWidth / 2 + 4;
+		tft.drawCircle(degX, midY - 40, 6, TFT_BLACK);
+		tft.setTextSize(1);
+		tft.setTextFont(4);
 		tft.setTextDatum(ML_DATUM);
-		tft.drawString("C", degX + 6, midY - 10);
+		tft.drawString("C", degX + 10, midY);
 
 		tft.setTextFont(7);
+		tft.setTextSize(2);
 		tft.setTextDatum(MR_DATUM);
-		tft.drawString(humBuf, DisplayManager::kScreenWidth - 30, midY);
-		tft.setTextFont(2);
+		tft.drawString(humBuf, DisplayManager::kScreenWidth - 40, midY);
+		tft.setTextSize(1);
+		tft.setTextFont(4);
 		tft.setTextDatum(ML_DATUM);
-		tft.drawString("%", DisplayManager::kScreenWidth - 26, midY - 10);
+		tft.drawString("%", DisplayManager::kScreenWidth - 32, midY);
 
 		tft.setTextDatum(TL_DATUM);
 	}

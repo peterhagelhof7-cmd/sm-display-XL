@@ -13,13 +13,13 @@ namespace {
 constexpr int16_t kScreenW = DisplayManager::kScreenWidth;
 constexpr int16_t kScreenH = DisplayManager::kScreenHeight;
 
-constexpr int16_t kRefreshX = kScreenW - 90;
-constexpr int16_t kRefreshY = 4;
-constexpr int16_t kRefreshW = 86;
-constexpr int16_t kRefreshH = 28;
+constexpr int16_t kRefreshX = kScreenW - 210;
+constexpr int16_t kRefreshY = 10;
+constexpr int16_t kRefreshW = 200;
+constexpr int16_t kRefreshH = 56;
 
-constexpr int16_t kRowStartY = 40;
-constexpr int16_t kRowHeight = 32;
+constexpr int16_t kRowStartY = 84;
+constexpr int16_t kRowHeight = 60;
 
 void drawNetworkList(DisplayManager &display, const std::vector<WlanManager::NetworkInfo> &networks) {
 	TFT_eSPI &tft = display.raw();
@@ -27,51 +27,52 @@ void drawNetworkList(DisplayManager &display, const std::vector<WlanManager::Net
 	tft.setTextColor(TFT_BLACK, TFT_WHITE);
 	tft.setTextDatum(TL_DATUM);
 
-	tft.setTextFont(4);
-	tft.drawString("WLAN waehlen", 10, 6);
+	tft.setTextFont(6);
+	tft.drawString("WLAN waehlen", 20, 12);
 
 	tft.drawRect(kRefreshX, kRefreshY, kRefreshW, kRefreshH, TFT_BLACK);
-	tft.setTextFont(2);
+	tft.setTextFont(4);
 	tft.setTextDatum(MC_DATUM);
 	tft.drawString("Aktualisieren", kRefreshX + kRefreshW / 2, kRefreshY + kRefreshH / 2);
 	tft.setTextDatum(TL_DATUM);
 
+	tft.setTextFont(4);
 	if (networks.empty()) {
-		tft.drawString("Keine WLANs gefunden.", 10, kRowStartY + 4);
+		tft.drawString("Keine WLANs gefunden.", 20, kRowStartY + 8);
 		return;
 	}
 
 	for (size_t i = 0; i < networks.size(); i++) {
 		int16_t y = kRowStartY + static_cast<int16_t>(i) * kRowHeight;
-		tft.drawRect(10, y, kScreenW - 20, kRowHeight - 4, TFT_BLACK);
+		tft.drawRect(20, y, kScreenW - 40, kRowHeight - 6, TFT_BLACK);
 
 		String label = networks[i].ssid;
 		if (!networks[i].secured) {
 			label += "  (offen)";
 		}
-		tft.drawString(label, 18, y + 8);
+		tft.drawString(label, 32, y + 14);
 
 		// Empfangsbalken rechts in der Zeile (1-3 Balken nach RSSI).
 		int8_t bars = 1;
 		if (networks[i].rssi >= -60) bars = 3;
 		else if (networks[i].rssi >= -75) bars = 2;
-		int16_t bx = kScreenW - 50;
+		int16_t bx = kScreenW - 110;
 		for (int8_t b = 0; b < 3; b++) {
-			int16_t bh = 6 + b * 5;
-			int16_t by = y + (kRowHeight - 4) - bh - 4;
+			int16_t bh = 12 + b * 10;
+			int16_t by = y + (kRowHeight - 6) - bh - 8;
 			uint16_t color = (b < bars) ? TFT_BLACK : TFT_LIGHTGREY;
-			tft.fillRect(bx + b * 8, by, 6, bh, color);
+			tft.fillRect(bx + b * 16, by, 12, bh, color);
 		}
 	}
 }
 
 int hitTestNetworkRow(int16_t x, int16_t y, size_t count) {
-	if (x < 10 || x > kScreenW - 10) {
+	if (x < 20 || x > kScreenW - 20) {
 		return -1;
 	}
 	for (size_t i = 0; i < count; i++) {
 		int16_t rowY = kRowStartY + static_cast<int16_t>(i) * kRowHeight;
-		if (y >= rowY && y < rowY + (kRowHeight - 4)) {
+		if (y >= rowY && y < rowY + (kRowHeight - 6)) {
 			return static_cast<int>(i);
 		}
 	}
@@ -128,13 +129,13 @@ const Key kRowSymbolsBottom[] = {
 	{"LEER", 4},
 };
 
-constexpr int16_t kKbTop = 100;
-constexpr int16_t kKbRowH = 35;
+constexpr int16_t kKbTop = 200;
+constexpr int16_t kKbRowH = 68;
 
-constexpr int16_t kCancelX = kScreenW - 70;
-constexpr int16_t kCancelY = 24;
-constexpr int16_t kCancelW = 60;
-constexpr int16_t kCancelH = 26;
+constexpr int16_t kCancelX = kScreenW - 190;
+constexpr int16_t kCancelY = 56;
+constexpr int16_t kCancelW = 180;
+constexpr int16_t kCancelH = 56;
 
 // Zeichnet eine Tastenreihe und ruft optional cb(key, x, y, w, h) fuer jede
 // Taste auf - genutzt sowohl zum Rendern als auch (mit Treffertest statt
@@ -165,14 +166,14 @@ void drawKeyboardScreen(DisplayManager &display, const String &ssid, const Strin
 	tft.setTextColor(TFT_BLACK, TFT_WHITE);
 	tft.setTextDatum(TL_DATUM);
 
-	tft.setTextFont(2);
-	tft.drawString("Netzwerk: " + ssid, 10, 4);
+	tft.setTextFont(4);
+	tft.drawString("Netzwerk: " + ssid, 20, 12);
 
 	// Eingabefeld links, "Abbrechen"-Schaltflaeche rechts daneben (nicht
 	// ueberlappend - reserviert eigenen Platz statt ueber dem Feld zu liegen).
-	tft.drawRect(10, 24, kCancelX - 16, 26, TFT_BLACK);
-	tft.setTextFont(2);
-	tft.drawString(typed, 16, 31);
+	tft.drawRect(20, 56, kCancelX - 32, 56, TFT_BLACK);
+	tft.setTextFont(4);
+	tft.drawString(typed, 32, 72);
 
 	tft.drawRect(kCancelX, kCancelY, kCancelW, kCancelH, TFT_BLACK);
 	tft.setTextDatum(MC_DATUM);
@@ -184,7 +185,7 @@ void drawKeyboardScreen(DisplayManager &display, const String &ssid, const Strin
 		char buf[2];
 		const char *shown = rowUpper(k.label, buf, shiftActive && !symbolsPage);
 		tft.setTextDatum(MC_DATUM);
-		tft.setTextFont(strlen(shown) == 1 ? 4 : 2);
+		tft.setTextFont(strlen(shown) == 1 ? 6 : 4);
 		tft.drawString(shown, x + w / 2, y + h / 2);
 		tft.setTextDatum(TL_DATUM);
 	};

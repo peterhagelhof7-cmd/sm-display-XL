@@ -13,23 +13,28 @@
 // bei Fehlmessung bleibt der letzte gueltige Wert erhalten statt "--".
 //
 // Mutex-geschuetzt wie SettingsManager (siehe dortigen Klassenkommentar):
-// update() laeuft im Arduino-Hauptloop, die Getter werden zusaetzlich vom
-// asynchronen Webserver-Task gelesen (Dashboard) - ohne Sperre waere das
-// ein Datenrennen (docs/entscheidungen.md).
+// die Getter werden vom Hauptloop UND vom asynchronen Webserver-Task gelesen
+// (Dashboard) - ohne Sperre waere das ein Datenrennen (docs/entscheidungen.md).
+//
+// XL-BESONDERHEIT (siehe project_sm-display-XL / esp-infoscreen dht22.c): der
+// eigentliche 1-Wire-Lesevorgang des DHT sperrt kurz die Interrupts. Auf dem
+// ESP32-8048S070 (RGB-Panel) DARF das nicht auf demselben Core passieren, der
+// die RGB-Panel-ISR bedient (das ist Core 1 = Arduino-loop/setup-Core), sonst
+// verhungert dessen DMA -> Artefakte bis Absturz. Deshalb liest ein eigener,
+// auf Core 0 gepinnter Task (statt direkt im Hauptloop wie bei den 2,8"-/
+// OLED-Schwesterprojekten), und legt die Werte mutex-geschuetzt ab.
 class SensorManager {
 public:
 	static constexpr uint32_t kPollIntervalMs = 5000;
 
-	void begin();
-	// In loop() aufrufen; liest den Sensor hoechstens alle 5s. Wendet die
-	// Kalibrierkorrektur (settings.dhtTempOffsetC()/dhtHumOffsetPct(), siehe
-	// SettingsManager) direkt auf den validierten Rohmesswert an, damit
-	// ALLE Verbraucher (Touch-UI, Webserver, Warnschwellwert-Auswertung)
-	// automatisch den bereits korrigierten Wert sehen, ohne die Korrektur
-	// an jeder Anzeigestelle einzeln nachzubilden. Liefert true, wenn in
-	// diesem Aufruf tatsaechlich gelesen wurde (auch bei implausiblem
-	// Ergebnis) - Aufrufer kann daran haengen, wann sich eine Neuzeichnung/
-	// Aufzeichnung lohnt, statt jeden loop()-Durchlauf.
+	// settings wird gespeichert (Zeiger), damit der Hintergrund-Task die
+	// aktuelle Kalibrierkorrektur bei jeder Messung anwenden kann.
+	void begin(const SettingsManager &settings);
+	// In loop() aufrufen. Liest NICHT mehr selbst den Sensor (das macht der
+	// Core-0-Task), sondern meldet nur, ob seit dem letzten Aufruf eine neue
+	// Messung eingetroffen ist - Aufrufer haengt daran, wann sich eine
+	// Neuzeichnung/Aufzeichnung lohnt. settings bleibt aus Kompatibilitaet in
+	// der Signatur (der Task nutzt den in begin() gespeicherten Zeiger).
 	bool update(const SettingsManager &settings);
 
 	bool hasValidReading() const;
@@ -43,12 +48,16 @@ public:
 
 private:
 	bool isPlausible(float tempC, float humidityPct) const;
+	void readOnce();               // fuehrt eine DHT-Messung durch, legt sie ab
+	void pollLoop();               // Endlosschleife des Hintergrund-Tasks
+	static void taskThunk(void *arg);
 
 	DHT dht{DHT11_PIN, DHT11_TYPE};
+	const SettingsManager *settings_ = nullptr;
 	// Nicht mutable noetig (wie bei SettingsManager) - Take/Give aendern nur
 	// den internen FreeRTOS-Zustand, nicht den Handle-Wert selbst.
 	SemaphoreHandle_t mutex_ = nullptr;
-	uint32_t lastPollMs = 0;
+	bool newReading_ = false;      // vom Task gesetzt, von update() konsumiert
 	bool valid = false;
 	float lastTempC = 0.0f;
 	float lastHumidityPct = 0.0f;

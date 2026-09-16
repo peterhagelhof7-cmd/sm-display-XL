@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESPmDNS.h>
+#include <esp_system.h>
 #include <math.h>
 
 #include "DisplayManager.h"
@@ -28,6 +29,15 @@
 #include "BrandingManager.h"
 #include "BrandingView.h"
 #include "DisplayMirror.h"
+#include "EventLog.h"
+
+// Der Arduino-Default-loopTask-Stack (8 KB) reicht fuer die tiefen
+// Zeichen-Aufrufketten NICHT: die drei OLED-Schwesterprojekte (sm/sm-poe/
+// sm-wlan) brauchten alle SET_LOOP_TASK_STACK_SIZE(16384), sonst Stack-
+// Overflow-Reboot. Auf dem XL ist der Bedarf hoeher (LovyanGFX statt
+// TFT_eSPI = tiefere Aufrufketten, 800x480, modaler Tastatur-/Einstellungs-
+// Dialog aus loop() heraus) -> grosszuegig 24 KB (RAM ist reichlich da).
+SET_LOOP_TASK_STACK_SIZE(24576);
 
 // Anders als bei den Schwesterprojekten ist config.h hier NICHT
 // verpflichtend (kein #error bei Fehlen) - dieses Projekt braucht zur
@@ -92,6 +102,7 @@ SettingsUI settingsUI;
 OtaManager ota;
 BrandingManager brandingManager;
 BrandingView brandingView;
+EventLog eventLog;
 // Vom Hauptloop befuellter Momentanzustand des Displays fuer den Web-Spiegel.
 // Muss VOR webServer stehen (Konstruktor nimmt eine const-Referenz darauf).
 DisplayMirrorState mirrorState;
@@ -351,6 +362,11 @@ void setup() {
 	Serial.begin(115200);
 	delay(200);
 	Serial.println("Sensormeter Display - Boot");
+	// DIAGNOSE: Grund des letzten Resets (1=POR 3=SW 4=PANIC 5=INT_WDT
+	// 6=TASK_WDT 7=WDT 9=BROWNOUT 15=USB 16=PWR_GLITCH). Zeigt, ob der
+	// Reboot-Loop ein Code-Absturz (PANIC/WDT) oder ein Strom-/Spannungs-
+	// problem (BROWNOUT/PWR_GLITCH) ist.
+	Serial.printf("[RST] reason=%d\n", (int)esp_reset_reason());
 	Serial.println(kFirmwareIdentityMarker);
 	Serial.println("[SERIAL] Kommandos: dhcp, ip, wifi, status, reset[ all] (+ Enter)");
 
@@ -395,7 +411,8 @@ void setup() {
 	}
 
 	TimeSync::begin();
-	sensor.begin();
+	eventLog.begin();
+	sensor.begin(settings);
 	graph.begin();
 	pingManager.begin();
 	sensormeterManager.begin();
@@ -566,10 +583,68 @@ void loop() {
 	// der gerade aktiven Datenquelle (lastenheft.txt Abschnitt 9 + Nutzer-
 	// Erweiterung um Warnschwellwerte, siehe docs/entscheidungen.md).
 	AlertInfo alert = computeAlertInfo(sensor, sensormeterManager, pingManager, settings);
+
+	// Alarm-Entprellung (Hysterese): der Rohzustand `alert` flattert bei
+	// Werten dicht am Schwellwert im Mess-/Ping-Takt (2s) im Sekundentakt.
+	// Daher ASYMMETRISCH: sofort warnen (schnell sichtbar), aber erst
+	// ENTWARNEN, wenn der Rohzustand kAlertClearHoldMs am Stueck inaktiv war.
+	// Kurze Erholungen dazwischen (= das Flattern) werden so zu EINER
+	// durchgehenden Warnung zusammengefasst - im Protokoll UND auf dem Schirm.
+	// Der entprellte `effectiveAlert` treibt Blinken/Statusleiste/Web-Spiegel;
+	// das Protokoll (events.txt) wird nur bei echter, entprellter
+	// Zustandsaenderung geschrieben.
+	static constexpr uint32_t kAlertClearHoldMs = 15000;
+	static bool stableActive = false;
+	static bool stableBlue = false;
+	static String stableSource = "";
+	static String stableDetail = "";
+	static uint32_t clearCandidateSinceMs = 0;
+
+	auto logWarnung = [&](const String &src, const String &detail) {
+		String l = String("WARNUNG ") +
+		           (stableBlue ? "BLAU (Unterschreitung)" : "ROT (Ueberschreitung/Ausfall)") + " | Quelle: " + src;
+		if (detail.length()) l += " | " + detail;
+		if (alert.extraCount > 0) l += " | +" + String(alert.extraCount) + " weitere Kategorie(n)";
+		eventLog.append(l);
+	};
+
+	if (alert.active) {
+		clearCandidateSinceMs = 0;   // jede erneute Verletzung bricht die Entwarn-Haltezeit ab
+		stableDetail = alert.detail; // aktuellstes Detail mitfuehren (Anzeige + spaetere Entwarnung)
+		if (!stableActive) {
+			stableActive = true;
+			stableBlue = alert.blue;
+			stableSource = alert.source;
+			logWarnung(stableSource, stableDetail);
+		} else if (stableBlue != alert.blue || stableSource != alert.source) {
+			// Weiter aktiv, aber Kategorie/Richtung hat gewechselt -> als neue
+			// Zustandsaenderung protokollieren. Reine Messwert-Schwankungen bei
+			// gleicher Quelle werden NICHT geloggt (sonst wieder Takt-Spam).
+			stableBlue = alert.blue;
+			stableSource = alert.source;
+			logWarnung(stableSource, stableDetail);
+		}
+	} else if (stableActive) {
+		if (clearCandidateSinceMs == 0) clearCandidateSinceMs = millis();
+		if (millis() - clearCandidateSinceMs >= kAlertClearHoldMs) {
+			String l = String("Entwarnung | Quelle: ") + stableSource;
+			if (stableDetail.length()) l += " | " + stableDetail;
+			eventLog.append(l);
+			stableActive = false;
+			clearCandidateSinceMs = 0;
+		}
+	}
+
+	// Entprellter Zustand fuer Anzeige/Statusleiste/Web-Spiegel (stableSource
+	// ist static -> der c_str()-Zeiger bleibt bis zum naechsten Loop gueltig).
+	AlertInfo effectiveAlert(stableActive, stableBlue, stableActive ? stableSource.c_str() : "",
+	                         alert.active ? alert.extraCount : 0, stableDetail);
+
 	// (LED entfaellt auf dem XL-Board; der Alarm bleibt ueber die rote/blaue
 	// Bildschirmfaerbung sichtbar - siehe bgColor unten.)
 	bool blinkOn = (millis() / 1000) % 2 == 0;
-	uint16_t bgColor = (alert.active && blinkOn) ? (alert.blue ? TFT_BLUE : TFT_RED) : TFT_WHITE;
+	uint16_t bgColor =
+	    (effectiveAlert.active && blinkOn) ? (effectiveAlert.blue ? TFT_BLUE : TFT_RED) : TFT_WHITE;
 
 	SlideEntry activeEntry = currentActiveSource();
 	DataSource activeSource = activeEntry.type;
@@ -582,8 +657,8 @@ void loop() {
 	mirrorState.smTargetIndex = activeEntry.smTargetIndex;
 	mirrorState.smSensorIndex = activeEntry.smSensorIndex;
 	mirrorState.held = slideHeld;
-	mirrorState.alertActive = alert.active;
-	mirrorState.alertBlue = alert.blue;
+	mirrorState.alertActive = effectiveAlert.active;
+	mirrorState.alertBlue = effectiveAlert.blue;
 	mirrorState.mode = settings.mode();
 
 	uint32_t now = millis();
@@ -650,15 +725,15 @@ void loop() {
 		// schmalen Statusleiste passt nur eine Quelle - "+N" macht
 		// wenigstens sichtbar, dass da noch mehr ist (Nutzerwunsch).
 		String alertLabel;
-		if (alert.active) {
-			alertLabel = String(alert.source);
-			if (alert.extraCount > 0) {
-				alertLabel += " +" + String(alert.extraCount);
+		if (effectiveAlert.active) {
+			alertLabel = String(effectiveAlert.source);
+			if (effectiveAlert.extraCount > 0) {
+				alertLabel += " +" + String(effectiveAlert.extraCount);
 			}
 		}
 		statusBar.draw(display, wlan, sensor.hasValidReading(), sensor.temperatureC(),
 		               sensor.humidityPercent(), TimeSync::formatTime(), TimeSync::formatDate(),
-		               showBottomBar, bgColor, alertLabel, alert.blue);
+		               showBottomBar, bgColor, alertLabel, effectiveAlert.blue);
 	}
 
 	delay(20);

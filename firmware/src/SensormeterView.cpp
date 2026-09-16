@@ -65,8 +65,8 @@ void SensormeterView::draw(DisplayManager &display, const SensormeterManager &ma
 	if (!sensorName.isEmpty()) {
 		title += " (" + sensorName + ")";
 	}
-	tft.setTextFont(2);
-	tft.drawString(title, DisplayManager::kScreenWidth / 2, contentTop + 14);
+	tft.setTextFont(4);
+	tft.drawString(title, DisplayManager::kScreenWidth / 2, contentTop + 24);
 
 	if (!manager.sensorValid(slide.targetIndex, slide.sensorIndex)) {
 		tft.setTextFont(4);
@@ -82,19 +82,23 @@ void SensormeterView::draw(DisplayManager &display, const SensormeterManager &ma
 
 	tft.setTextDatum(MR_DATUM);
 	tft.setTextFont(7);
-	tft.drawString(tempBuf, DisplayManager::kScreenWidth / 2 - 6, midY + 10);
-	int16_t degX = DisplayManager::kScreenWidth / 2 + 2;
-	tft.drawCircle(degX, midY - 12, 3, TFT_BLACK);
-	tft.setTextFont(2);
+	tft.setTextSize(2);  // 800x480: grosse Messwerte, analog zum Uhr-Slide
+	tft.drawString(tempBuf, DisplayManager::kScreenWidth / 2 - 8, midY);
+	int16_t degX = DisplayManager::kScreenWidth / 2 + 4;
+	tft.drawCircle(degX, midY - 40, 6, TFT_BLACK);
+	tft.setTextSize(1);
+	tft.setTextFont(4);
 	tft.setTextDatum(ML_DATUM);
-	tft.drawString("C", degX + 6, midY);
+	tft.drawString("C", degX + 10, midY);
 
 	tft.setTextFont(7);
+	tft.setTextSize(2);
 	tft.setTextDatum(MR_DATUM);
-	tft.drawString(humBuf, DisplayManager::kScreenWidth - 30, midY + 10);
-	tft.setTextFont(2);
+	tft.drawString(humBuf, DisplayManager::kScreenWidth - 40, midY);
+	tft.setTextSize(1);
+	tft.setTextFont(4);
 	tft.setTextDatum(ML_DATUM);
-	tft.drawString("%", DisplayManager::kScreenWidth - 26, midY);
+	tft.drawString("%", DisplayManager::kScreenWidth - 32, midY);
 
 	tft.setTextDatum(TL_DATUM);
 }
@@ -125,10 +129,10 @@ String formatUptime(uint32_t totalSeconds) {
 void overviewRowGeometry(int16_t contentTop, int16_t contentBottom, size_t targetCount, int16_t &rowTop,
                           int16_t &rowH) {
 	int16_t h = contentBottom - contentTop;
-	rowTop = contentTop + 24;
-	int16_t rh = static_cast<int16_t>((h - 24) / static_cast<int16_t>(targetCount));
-	if (rh > 32) rh = 32;
-	if (rh < 16) rh = 16;
+	rowTop = contentTop + 40;
+	int16_t rh = static_cast<int16_t>((h - 40) / static_cast<int16_t>(targetCount));
+	if (rh > 52) rh = 52;
+	if (rh < 24) rh = 24;
 	rowH = rh;
 }
 } // namespace
@@ -163,9 +167,9 @@ void SensormeterView::drawOverview(DisplayManager &display, const SensormeterMan
 		return;
 	}
 
-	tft.setTextFont(2);
+	tft.setTextFont(4);
 	tft.setTextDatum(TL_DATUM);
-	tft.drawString("Sensormeter - Uebersicht", 8, contentTop + 4);
+	tft.drawString("Sensormeter - Uebersicht", 8, contentTop + 8);
 
 	int16_t rowTop, rowH;
 	overviewRowGeometry(contentTop, contentBottom, manager.targetCount(), rowTop, rowH);
@@ -176,7 +180,7 @@ void SensormeterView::drawOverview(DisplayManager &display, const SensormeterMan
 		if (name.isEmpty()) name = "(Ziel " + String(i + 1) + ")";
 
 		tft.setTextDatum(ML_DATUM);
-		tft.setTextFont(2);
+		tft.setTextFont(4);
 		tft.drawString(name, 12, y + rowH / 2);
 
 		String uptimeText = "--";

@@ -21,13 +21,20 @@ struct AlertInfo {
 	// nur eine Quelle in der Statusleiste anzeigbar ist.
 	uint8_t extraCount;
 
+	// Konkretes ausloesendes Element (z.B. "google.com 250 ms > 200 ms" oder
+	// "Serverraum (Intern) Temp 31 C > 30 C") - macht das Warn-Protokoll
+	// (events.txt) auswertbar, statt nur die Kategorie zu nennen. Leer, wenn
+	// kein Detail ermittelbar.
+	String detail;
+
 	// Explizite Konstruktoren statt Default-Member-Initializer: mit
 	// Default-Initializern ist die Struct kein Aggregat mehr (vor C++14),
 	// die {true,false,"X"}-Rueckgaben in computeAlertInfo() scheitern sonst
 	// am Compiler.
 	AlertInfo() : active(false), blue(false), source(""), extraCount(0) {}
-	AlertInfo(bool activeIn, bool blueIn, const char *sourceIn, uint8_t extraCountIn = 0)
-	    : active(activeIn), blue(blueIn), source(sourceIn), extraCount(extraCountIn) {}
+	AlertInfo(bool activeIn, bool blueIn, const char *sourceIn, uint8_t extraCountIn = 0,
+	          const String &detailIn = String())
+	    : active(activeIn), blue(blueIn), source(sourceIn), extraCount(extraCountIn), detail(detailIn) {}
 };
 
 // Prioritaet bei mehreren gleichzeitigen Verstoessen: erster Treffer in

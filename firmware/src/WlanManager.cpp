@@ -12,6 +12,12 @@ void WlanManager::begin() {
 	// WLAN-Powersave abschalten - stabilisiert die Verbindung (ESP32-Default-
 	// Modem-Sleep verursacht mit manchen APs haeufige kurze Abbrueche).
 	WiFi.setSleep(false);
+	// HINWEIS: KEINE WLAN-Sendeleistungs-Drosselung (setTxPower) mehr - ein
+	// frueher Versuch (11 dBm) gegen den Boot-Brownout kostete zu viel
+	// Reichweite (WLAN wurde nicht mehr gefunden). Der Brownout war ein
+	// Stromversorgungsproblem (zu duennes Kabel/schwacher Port) und wird
+	// hardwareseitig geloest (kraeftige 5-V-Quelle), nicht ueber die
+	// Sendeleistung. Siehe project_sm-display-XL.
 }
 
 std::vector<WlanManager::NetworkInfo> WlanManager::scan(uint8_t maxResults) {
