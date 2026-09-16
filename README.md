@@ -1,5 +1,7 @@
 # Sensormeter Display (HW-458B)
 
+**▶ [Web-Flasher der Sensormeter-Familie](https://peterhagelhof7-cmd.github.io/sensormeter-family/)** — Firmware aller Geräte direkt im Browser flashen.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/projektfamilie-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/projektfamilie-light.png">
