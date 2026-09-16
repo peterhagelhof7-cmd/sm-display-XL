@@ -23,7 +23,7 @@ einen abgestürzten/eingefrorenen Bootzustand des Geräts zu erkennen.
 
 1. **Data collection → Hosts → Create host**
 2. Name vergeben (z. B. "Display Wohnzimmer")
-3. Template **"Sensormeter Display (HW-458B)"** zuweisen
+3. Template **"Sensormeter Display XL (ESP32-8048S070C)"** zuweisen
 4. Agent-Interface hinzufügen, IP-Adresse des Displays eintragen — dient nur
    als Zieladresse für die ICMP-Simple-Checks, es muss dort kein
    Zabbix-Agent laufen

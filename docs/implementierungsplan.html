@@ -1,4 +1,4 @@
-<title>Sensormeter Display — Implementierungsplan</title>
+<title>Sensormeter Display XL — Implementierungsplan (2,8"-Basis)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root {
@@ -312,7 +312,7 @@
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Sensormeter Display · HW-458B</div>
+    <div class="eyebrow">Sensormeter Display XL · Basisplan der 2,8"-Variante (HW-458B)</div>
     <div style="display:flex; align-items:center; gap:12px;">
       <svg viewBox="0 0 48 48" fill="none" width="30" height="30" style="flex-shrink:0;">
         <path d="M24,9 L37.6,32.5 L10.4,32.5 Z" stroke="var(--line)" stroke-width="2.2" stroke-linejoin="round"/>
@@ -327,7 +327,11 @@
     <p class="lede">
       Reihenfolge von der Projektstruktur bis zur vollständigen Firmware gemäß
       <span class="mono">lastenheft.txt</span> / <span class="mono">pflichtenheft.txt</span>.
-      Kein bestehender Prototyp — Startpunkt ist ein leeres PlatformIO-Projekt.
+      <b>Dieser Plan dokumentiert die ursprüngliche Entwicklung der 2,8"-Variante
+      (HW-458B).</b> Das XL-Board (ESP32-8048S070C) ist eine Portierung dieser
+      fertigen Firmware auf ein 7"-RGB-Panel (LovyanGFX) mit GT911-Touch — die
+      Phasen unten beziehen sich auf die Basis, nicht auf einen erneuten
+      P0–P8-Durchlauf.
     </p>
     <div class="legend">
       <span class="legend-item"><span class="swatch" style="background:var(--copper)"></span>Kernfunktion (Lastenheft)</span>

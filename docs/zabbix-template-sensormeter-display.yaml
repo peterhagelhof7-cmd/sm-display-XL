@@ -5,10 +5,10 @@ zabbix_export:
       name: 'IoT Sensoren'
   templates:
     - uuid: 8a1c9d3e6f4b4a2c9d0e7f5a3b2c1d4e
-      template: 'Sensormeter Display HW-458B'
-      name: 'Sensormeter Display (HW-458B)'
+      template: 'Sensormeter Display XL'
+      name: 'Sensormeter Display XL (ESP32-8048S070C)'
       description: |
-        Template fuer das Sensormeter-Display-Projekt (HW-458B Touchdisplay).
+        Template fuer das Sensormeter-Display-Projekt (ESP32-8048S070C 7" Touchdisplay).
 
         Anders als das Sensormeter-Projekt (WT32-ETH01) betreibt dieses
         Geraet KEINEN SNMP-Agenten und KEINEN Webserver - es ist ein reiner
@@ -72,13 +72,13 @@ zabbix_export:
   triggers:
     - uuid: 5c8b1e4d7f6a4b9c2d3e4f5a6b7c8d9e
       name: '{HOST.NAME} nicht erreichbar (ICMP)'
-      expression: 'last(/Sensormeter Display HW-458B/icmpping)=0'
+      expression: 'last(/Sensormeter Display XL/icmpping)=0'
       priority: HIGH
     - uuid: 6d9c2f5e8a7b4c0d3e4f5a6b7c8d9e0f
       name: 'Hoher Paketverlust zu {HOST.NAME}'
-      expression: 'min(/Sensormeter Display HW-458B/icmppingloss,5m)>{$ICMP_LOSS_MAX_PERCENT}'
+      expression: 'min(/Sensormeter Display XL/icmppingloss,5m)>{$ICMP_LOSS_MAX_PERCENT}'
       priority: WARNING
     - uuid: 7e0d3a6f9b8c4d1e4f5a6b7c8d9e0f1a
       name: 'Hohe Antwortzeit von {HOST.NAME}'
-      expression: 'min(/Sensormeter Display HW-458B/icmppingsec,5m)>{$ICMP_RESPONSE_MAX_SEC}'
+      expression: 'min(/Sensormeter Display XL/icmppingsec,5m)>{$ICMP_RESPONSE_MAX_SEC}'
       priority: WARNING

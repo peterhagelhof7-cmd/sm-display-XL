@@ -1,15 +1,22 @@
 
-PFLICHTENHEFT – SENSORMETER DISPLAY (HW-458B)
+PFLICHTENHEFT – SENSORMETER DISPLAY XL (ESP32-8048S070C)
+
+HINWEIS (XL-Portierung): XL-Variante des 2,8"-Sensormeter-Display. Die
+Software-Architektur/Module sind identisch; ausgetauscht ist die Display-/
+Touch-Schicht. Wo unten "TFT_eSPI (ST7789P3, SPI, 240x320)" und "Bit-Bang-
+Touch" steht, gilt für das XL-Board stattdessen LovyanGFX (RGB-Parallel-Panel)
+und GT911-Kapazitiv-Touch (I2C). Ebenso: KEINE RGB-LED; Framebuffer im PSRAM.
 
 1. SYSTEMARCHITEKTUR
 
-Das System basiert auf einem ESP32 (ESP-WROOM-32, Board HW-458B) mit
+Das System basiert auf einem ESP32-S3 (Board ESP32-8048S070C) mit
 folgenden Software-Komponenten:
 
-- Arduino Framework (PlatformIO, Board esp32dev)
-- TFT_eSPI (ST7789P3, 4-Draht-SPI, 240x320)
-- Touch: eigener Bit-Bang-Treiber auf den TP_-Pins (keine SPI-Bibliothek,
-  siehe docs/entscheidungen.md)
+- Arduino Framework (PlatformIO, Board esp32-s3-devkitc-1 / Env esp32-8048S070C)
+- LovyanGFX (7" 800x480 RGB-Parallel-Panel, Bus_RGB + Panel_RGB; Framebuffer
+  im PSRAM) – ersetzt TFT_eSPI/ST7789 der 2,8"-Basis
+- Touch: GT911 kapazitiv über I2C (LovyanGFX Touch_GT911, Polling) – ersetzt
+  den resistiven Bit-Bang-Touch der 2,8"-Basis, siehe docs/entscheidungen.md
 - LittleFS (nur für history.csv; alle übrigen Einstellungen liegen in NVS
   über die Preferences-Bibliothek, siehe Abschnitt 3)
 - WLAN-Client (ESP32 WiFi)

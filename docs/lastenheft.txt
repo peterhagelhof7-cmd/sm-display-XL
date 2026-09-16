@@ -1,4 +1,10 @@
-LASTENHEFT – SENSORMETER DISPLAY (HW-458B / ESP32 2,8" Touchdisplay)
+LASTENHEFT – SENSORMETER DISPLAY XL (ESP32-8048S070C / ESP32-S3 7" Touchdisplay)
+
+HINWEIS: XL-Variante des 2,8"-Sensormeter-Display. Die funktionalen
+Anforderungen (Datenquellen, GUI-Betriebsarten, Webserver, OTA, Warnschwellwerte)
+sind identisch; abweichend ist ausschließlich die Hardware/Display-Schicht
+(Abschnitt 2 unten). Aussagen weiter unten zu ST7789/TFT_eSPI/resistivem Touch/
+RGB-LED beziehen sich auf die 2,8"-Basis und gelten hier entsprechend nicht.
 
 1. PROJEKT
 Projektname: Sensormeter Display
@@ -11,36 +17,31 @@ Referenz relevant, soweit sie unten explizit übernommen werden.
 
 2. SYSTEMBASIS
 
-Hardware: HW-458B – "ESP32 2,8" Display-Entwicklungsboard"
-(bestätigt durch Datenblatt CBAA0055-008_DE.pdf und Foto CYD.jpg,
-Platinenaufdruck "HW-458")
+Hardware: ESP32-8048S070C – "7" ESP32-S3 Display-Entwicklungsboard"
 
-- MCU: ESP-WROOM-32 (klassischer ESP32, NICHT ESP32-S3)
-  Flash 32 Mbit, SRAM 520 KB
-- Display: 2,8" TFT, 240x320, Treiber ST7789P3, 4-Draht-SPI
-- Touch: resistiv, 4-Draht, eigener Touch-Controller (nicht kapazitiv/I2C)
-  TP_CLK = IO25, TP_CS = IO33, TP_DIN = IO32, TP_OUT = IO39, TP_IRQ = IO36
-- Hintergrundbeleuchtung: IO21 (PWM-fähig, für Helligkeitsregelung)
-- RGB-Status-LED: IO17 (R), IO4 (G), IO16 (B)
-- Lichtsensor (Fotowiderstand, Rückseite): IO34
-- Audio: IO26, Lautsprecherbuchse 2p 1,25 mm, 1,5 W / 4 Ω
-- TF/SD-Karte: CD/DAT3 = IO5, CMD = IO23, CLK = IO18, DAT0 = IO19
-- Serielle Schnittstelle (4p 1,25 mm): VIN, TX, RX, GND
-- USB-C und Micro-USB (Strom + Daten)
-- Stromaufnahme: ~300 mA Spitze @ 3,3 V, Deep-Sleep 6,5 µA
-- Abmessungen Board: 85,85 x 49,40 mm
+- MCU: ESP32-S3 (NICHT klassischer ESP32); 16 MB Flash, 8 MB Octal-PSRAM
+- Display: 7" TFT, 800x480, 16-bit RGB-Parallel-Panel, Ansteuerung über
+  LovyanGFX (Bus_RGB + Panel_RGB). RGB-Datenpins (R/G/B), DE/HSYNC/VSYNC/PCLK
+  und Timings siehe firmware/include/LGFX_XL.h
+- Touch: GT911 kapazitiv über I2C – SDA = IO19, SCL = IO20, RST = IO38,
+  INT nicht verdrahtet (Polling), I2C-Adresse 0x14 (alternativ 0x5D)
+- Hintergrundbeleuchtung: IO2 (LEDC-PWM, für Helligkeitsregelung)
+- KEINE RGB-Status-LED (auf diesem Board nicht vorhanden) – Alarm nur über die
+  Bildschirmfärbung rot/blau
+- Serielle Konsole/Flashen: UART0 (IO43/IO44) über CH340.
+  NATIVE USB NICHT NUTZBAR: der GT911 belegt IO19/IO20 = die nativen
+  USB-D-/D+-Pins des ESP32-S3 (native USB → Reboot-Loop).
+- Stromversorgung: 5 V USB, empfohlen ≥ 2 A (7"-Backlight + PSRAM), siehe
+  docs/stromversorgung.md
 
 DHT11 (extern angeschlossen, intern im Sinne des Lastenhefts = "eingebauter"
 Sensor des Gesamtsystems):
-- Anschluss über Steckverbinder "Erweiterungsanschluss IO2"
-  (4p 1,25 mm: GND, IO22, IO27, 3,3V)
-- Datenleitung: IO22
-  ENTSCHEIDUNG: nicht literal GPIO2 (wie in den Vorgänger-Lastenheften
-  angegeben), da GPIO2 ein Boot-Strapping-Pin des ESP32 ist und laut
-  Hersteller-Pinout am Steckverbinder "IO2" gar nicht anliegt. Stattdessen
-  IO22, da dort frei (keine anderweitige Nutzung auf diesem Board vorgesehen).
-  Alternative am selben Steckverbinder wäre IO27 (belegt als TOUCH7/ADC2_CH7) –
-  beim praktischen Aufbau gegen die reale Verdrahtung/Silkscreen verifizieren.
+- Anschluss über den P4-Erweiterungsanschluss (3,3V, IO18, GND)
+- Datenleitung: IO18 (der GT911 hat bewusst keinen INT-Pin verdrahtet, damit
+  IO18 frei für den DHT bleibt)
+
+Partitionstabelle: partitions_ota_16m.csv (16 MB, zwei 4-MB-OTA-App-Slots).
+Der 800x480-RGB-Framebuffer (~768 KB) liegt im PSRAM.
 
 Nicht verbaut / nicht Teil dieses Projekts: Erweiterungsanschluss "IO1"
 (GND, IO35, IO22, IO21) – wird aktuell nicht genutzt.
