@@ -1,60 +1,50 @@
-# Strombedarf & Stromversorgung
+# Strombedarf & Stromversorgung — Sensormeter Display XL
 
-Strombudget für ein Sensormeter-Display-Gerät (HW-458B), damit ein
-passendes Netzteil gewählt werden kann. Unterschieden wird zwischen
-**Durchschnitt** (Dauerlast/Wärmeentwicklung) und **Spitze** (wie kräftig
-das Netzteil kurzzeitig sein muss, damit die Spannung nicht einbricht).
+Strombudget für ein Sensormeter-Display-XL-Gerät (ESP32-8048S070C), damit ein
+passendes Netzteil gewählt werden kann.
 
-## Strombudget pro Komponente (bei 3,3V, Board-interne Schiene)
+> **Hinweis:** Für dieses Board liegt (anders als beim 2,8"-HW-458B) kein
+> herstellerseitiges Strom-Datenblatt vor. Die folgenden Werte sind **Schätzungen
+> für diese Board-Klasse** (7"-RGB-Panel + ESP32-S3 + Octal-PSRAM), nicht
+> gemessen. Vor Serieneinsatz am realen Board nachmessen.
 
-| Komponente | Ø-Strom | Spitzenstrom | Quelle |
+## Strombudget pro Komponente (5V-USB-Eingang, geschätzt)
+
+| Komponente | Ø-Strom (geschätzt) | Spitze (geschätzt) | Anmerkung |
 |---|---|---|---|
-| HW-458B Hauptmodul (ESP-WROOM-32 + TFT-Controller) | ~80–120 mA | 300 mA | Herstellerdatenblatt `CBAA0055-008_DE.pdf`: "Stromaufnahme: 300mA bei 3,3V" (WLAN-Sendebursts/Flash-Schreibzugriffe); Deep-Sleep-Wert (6,5µA) laut Datenblatt hier nicht relevant, da das Gerät dauerhaft aktiv betrieben wird |
-| TFT-Hintergrundbeleuchtung (4 weiße LEDs) | 40–80 mA | 80 mA | Herstellerdatenblatt: "V_LED=3,2V; I_LED=80mA (max.)"; per PWM (`BacklightManager`) auf 60% Default gedimmt → ~48 mA typisch, 80 mA bei 100% Helligkeit |
-| DHT11 (Erweiterungsanschluss IO2) | ~0,3 mA | ~2,5 mA | Standard-Datenblattwerte; 5s-Abfragetakt (lastenheft.txt Abschnitt 8), DHT liegt die meiste Zeit im Standby, Spitze nur während der ~20ms-Messung |
-| RGB-Status-LED (nur bei Ping-Alarm aktiv) | 0 mA im Normalbetrieb | ~20 mA | Nur ein Farbkanal (rot) blinkend bei anhaltendem Ping-Fehler, sonst aus |
+| 7"-Backlight (LED-Hinterleuchtung) | ~250–450 mA | ~500 mA | Größter Verbraucher; per LEDC-PWM (`BacklightManager`) gedimmt — Default < 100 %, daher meist unterhalb der Spitze |
+| ESP32-S3 + RGB-Panel-Treiber + PSRAM | ~150–250 mA | ~500 mA | WLAN-Sendebursts (Scan/Verbindung), kontinuierliches RGB-Refresh des 800×480-Framebuffers aus dem PSRAM, Flash-Schreibzugriffe |
+| DHT11 (P4-Anschluss) | ~0,3 mA | ~2,5 mA | 5s-Abfragetakt, sonst Standby |
 
-## Gesamtbedarf pro Gerät (3,3V-Schiene)
+Keine RGB-Status-LED auf diesem Board (entfällt gegenüber dem 2,8"-Gerät).
 
-| Szenario | Ø-Strom | Spitzenstrom |
+## Gesamtbedarf pro Gerät (5V-Schiene, geschätzt)
+
+| Szenario | Ø-Strom | Spitze |
 |---|---|---|
-| Normalbetrieb (Helligkeit 60%, kein Ping-Alarm) | ~130–170 mA | ~385 mA |
-| Ping-Alarm aktiv (LED blinkt zusätzlich) | ~130–170 mA | ~405 mA |
+| Normalbetrieb (Backlight gedimmt) | ~450–700 mA | ~900 mA–1 A |
+| Volle Helligkeit + WLAN-Burst | — | bis ~1 A |
 
-Der Spitzenwert wird praktisch komplett vom Hauptmodul selbst bestimmt
-(WLAN-Sendebursts, insbesondere durch WLAN-Scan/Verbindungsaufbau,
-NVS-Schreibzugriffe, SNMP-/Ping-Anfragen, OTA-Flash-Schreibvorgänge) plus
-der Hintergrundbeleuchtung bei hoher Helligkeitseinstellung.
-
-## Umrechnung auf die 5V-USB-Versorgung
-
-Die 3,3V-Schiene wird board-intern aus der 5V-USB-Versorgung erzeugt
-(USB-C oder USB-Micro, siehe Datenblatt). Der genaue Wandlerwirkungsgrad
-ist im Datenblatt nicht spezifiziert; bei einer angenommenen Effizienz von
-70–85% (typischer Bereich für LDO bis einfachen Schaltregler) ergibt sich
-am 5V-Eingang ein Spitzenstrom von etwa **300–360 mA**.
+Die Spitze wird vom Backlight (bei hoher Helligkeit) und den WLAN-Sendebursts
+des ESP32-S3 bestimmt; das kontinuierliche RGB-Panel-Refresh sorgt für eine
+höhere Grundlast als beim SPI-Panel des 2,8"-Boards.
 
 ## Empfohlene Stromversorgung
 
-**5V-USB-Netzteil, mindestens 1A (1000 mA).**
+**5V-USB-Netzteil, mindestens 2 A (2000 mA).**
 
 Begründung:
-- Deckt den berechneten 5V-Spitzenstrom (~300–360 mA) mit deutlicher
-  Reserve gegen Spannungsabfall durch dünne/billige USB-Kabel ab.
-- Gleiche Empfehlung wie beim Sensormeter-Projekt (WT32-ETH01) - ein
-  handelsübliches 5V/1A-USB-Netzteil (Ladegerät) genügt, kein
-  spezialisiertes Netzteil nötig.
-- Ein gutes, ausreichend dickes USB-Kabel ist wichtiger als die reine
-  Netzteil-Nennleistung - dünne Kabel erzeugen bei den kurzen
-  WLAN-/Backlight-Stromspitzen spürbaren Spannungsabfall.
+- Das 7"-Backlight allein zieht ein Mehrfaches der 2,8"-Variante; zusammen mit
+  ESP32-S3/PSRAM und WLAN-Spitzen ist 1 A zu knapp.
+- 2 A bietet Reserve gegen Spannungsabfall über dünne/billige USB-Kabel.
+- Ein ausreichend dickes USB-Kabel ist wichtiger als die reine Nennleistung —
+  dünne Kabel erzeugen bei Backlight-/WLAN-Stromspitzen spürbaren Spannungsabfall.
 
-Nicht verwenden: der Ausgang eines USB-Seriell-Adapters (zu schwach) oder
-ein reiner Daten-USB-Port ohne Ladefunktion (kann auf 500 mA begrenzt sein
-und wäre bei Spitzenlast knapp).
+Nicht verwenden: den Ausgang eines USB-Seriell-Adapters oder einen reinen
+Daten-USB-Port (oft auf 500 mA begrenzt — für dieses Board deutlich zu wenig).
 
 ## Nicht Teil dieser Schätzung
 
-Deep-Sleep/Energiesparbetrieb (Datenblatt nennt 6,5µA) ist für dieses
-Gerät nicht relevant, da laut lastenheft.txt Abschnitt 12 Display-
-Energiesparen/automatische Abschaltung bewusst nicht Teil des Scopes ist -
-das Gerät läuft dauerhaft im aktiven Anzeigebetrieb.
+Deep-Sleep/Energiesparbetrieb ist für dieses Gerät nicht relevant — es läuft
+dauerhaft im aktiven Anzeigebetrieb (Display-Energiesparen ist bewusst nicht
+Teil des Scopes).

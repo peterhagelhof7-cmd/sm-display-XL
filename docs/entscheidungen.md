@@ -1,4 +1,25 @@
-# Entscheidungsprotokoll — Sensormeter Display
+# Entscheidungsprotokoll — Sensormeter Display XL
+
+> **XL-Portierung (ESP32-8048S070C, 7") — Hardware-Abweichungen zur 2,8"-Basis.**
+> Dieses Protokoll entstand am 2,8"-Board (HW-458B) und dokumentiert die
+> gemeinsame Firmware-Logik, die 1:1 gilt. Für das XL-Board weichen ab:
+> - **Display:** 7" 800×480 RGB-Parallel-Panel statt 2,8" ST7789-SPI. Ansteuerung
+>   über **LovyanGFX** (`Bus_RGB` + `Panel_RGB`) statt TFT_eSPI. Der Framebuffer
+>   (~768 KB) liegt im **PSRAM** (`BOARD_HAS_PSRAM`).
+> - **Touch:** **GT911 kapazitiv** (I2C, SDA GPIO19 / SCL GPIO20, RST GPIO38,
+>   Polling ohne INT) statt resistivem Bit-Bang-Touch mit 2-Punkt-Kalibrierung.
+> - **Keine RGB-Status-LED** (auf dem XL-Board entfallen) — Warnung nur über die
+>   rote/blaue Bildschirmfärbung.
+> - **Konsole/Flashen über UART0 (CH340)**, NICHT native USB: der GT911 belegt
+>   GPIO19/20 = die nativen USB-D-/D+-Pins des S3 (native USB → Reboot-Loop).
+> - **Partitionstabelle:** `partitions_ota_16m.csv` (16 MB, 2×4 MB OTA-Slots)
+>   statt der 4-MB-Tabelle des 2,8"-Boards.
+> - **UI auf 800×480 skaliert** (Schriftgrößen/Geometrie), Alarm-Hysterese und
+>   Ereignis-Protokoll mit konkretem Auslöser ergänzt.
+>
+> Pinbelegung/Timings maßgeblich in `firmware/include/LGFX_XL.h` und
+> `firmware/include/pins.h`. Aussagen unten zu ST7789/TFT_eSPI/resistivem Touch/
+> RGB-LED/SPI beziehen sich auf die 2,8"-Basis und gelten am XL entsprechend nicht.
 
 ## Mehrfach-Sensormeter-Ziele, Geraete-Info-Dialog, Static-IP (Erweiterung ueber lastenheft.txt 7.3 hinaus)
 

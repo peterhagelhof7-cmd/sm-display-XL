@@ -1,34 +1,34 @@
-# Stückliste (BOM)
+# Stückliste (BOM) — Sensormeter Display XL
 
 ## Pro Gerät
 
 | Bauteil | Menge | Hinweis |
 |---|---|---|
-| HW-458B (ESP-WROOM-32 + 2,8" TFT ST7789P3, resistiver Touch) | 1 | Hauptmodul, siehe `CBAA0055-008_DE.pdf` |
-| DHT11, 3-Draht-Modul (mit eingebautem Pull-up) | 1 | Data → GPIO22 über Steckverbinder "Erweiterungsanschluss IO2", siehe `entscheidungen.md` |
-| Verbindungskabel 4p 1,25 mm (liegt dem Board bei) | 1 | Für den Erweiterungsanschluss IO2 (GND/IO22/IO27/3,3V) |
-| USB-Kabel (USB-C oder USB-C-zu-USB-C, liegt dem Board bei) | 1 | Stromversorgung + Flashen über USB-C oder USB-Micro |
-| Netzteil 5V, ≥ 1 A (USB) | 1 | Herleitung siehe `stromversorgung.md` (Board-Spitzenstrom 300 mA @ 3,3V + Backlight bis 80 mA, umgerechnet auf die 5V-Schiene, plus Kabel-/Reserve-Puffer) |
-| Gehäuse | 0–1 | Laut Datenblatt optional erhältlich ("mit/ohne Gehäuse"), nicht Teil dieses Repos |
-
-## Im Lieferumfang des Boards enthalten (kein separater Kauf nötig)
-
-| Teil | Hinweis |
-|---|---|
-| Eingabestift | Für den resistiven Touchscreen |
-| Anschlusskabel | Für Erweiterungsanschlüsse IO1/IO2 bzw. Serial Port (4p 1,25 mm) |
+| ESP32-8048S070C (ESP32-S3 + 7" 800×480 RGB-Panel, kapazitiver GT911-Touch) | 1 | Hauptmodul; 16 MB Flash + 8 MB Octal-PSRAM. Pinbelegung Display/Touch siehe `firmware/include/LGFX_XL.h` |
+| DHT11, 3-Draht-Modul (mit eingebautem Pull-up) | 1 | Data → `GPIO18` am P4-Erweiterungsanschluss, siehe `firmware/include/pins.h` |
+| Verbindungskabel (JST, passend zum P4-Anschluss) | 1 | Für den DHT-Erweiterungsanschluss |
+| USB-Kabel | 1 | Stromversorgung + Flashen (CH340/UART0 auf dem Board) |
+| Netzteil 5V, **≥ 2 A** (USB) | 1 | Herleitung siehe `stromversorgung.md` — das 7"-Backlight + ESP32-S3/PSRAM ziehen deutlich mehr als das 2,8"-Board |
+| Gehäuse | 0–1 | optional, nicht Teil dieses Repos |
 
 ## Werkzeug (einmalig, nicht pro Gerät)
 
 | Werkzeug | Hinweis |
 |---|---|
-| CH340-Treiber (Windows) | Für die USB-Serial-Erkennung beim Flashen, siehe `CBAA0055-008_DE.pdf` Abschnitt "Gebrauchsanweisung" |
+| CH340-Treiber (Windows) | Für die USB-Serial-Erkennung beim Flashen (Konsole/Upload laufen über UART0/CH340, **nicht** über die native USB-Buchse) |
+
+## Hinweise zur Hardware
+
+- **Kapazitiver Touch (GT911):** kein Eingabestift nötig (anders als der
+  resistive Touch des 2,8"-Boards) und keine 2-Punkt-Kalibrierung.
+- **Keine RGB-Status-LED** auf diesem Board — Warnungen werden über die
+  rote/blaue Bildschirmfärbung angezeigt.
+- **Native USB nicht nutzbar:** Der GT911 belegt `GPIO19`/`20` (die nativen
+  USB-D-/D+-Pins des S3). Flashen/Konsole daher ausschließlich über UART0/CH340.
 
 ## Nicht Teil dieses Scopes
 
-Laut Datenblatt vom Board unterstützt, aber im Lastenheft nicht gefordert und
-daher nicht angeschafft/verdrahtet: TF-/SD-Karte, Lautsprecher (1,5 W/4 Ω),
-Audio-Ausgang (GPIO26).
-
-Einstellungs-Webserver und OTA-Update (lastenheft.txt Abschnitt 11) sind
-reine Software-Funktionen ohne zusätzlichen Hardwarebedarf.
+Auf dem Board vorhandene, aber nicht genutzte Peripherie (z. B. microSD-Slot,
+Audio-Ausgang) ist im Lastenheft nicht gefordert und daher nicht verdrahtet.
+Einstellungs-Webserver und OTA-Update sind reine Software-Funktionen ohne
+zusätzlichen Hardwarebedarf.
