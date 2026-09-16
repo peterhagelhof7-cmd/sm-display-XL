@@ -8,7 +8,7 @@
 // in NVS gespeichert. Hier steht nur die Firmware-Version.
 // ============================================================================
 
-#define DEVICE_FIRMWARE_VERSION "0.9.0-rc10"
+#define DEVICE_FIRMWARE_VERSION "1.0.0"
 
 // Projekt-Kennung fuer die OTA-Herkunftspruefung (siehe OtaManager.h/.cpp) -
 // eindeutig je Sensormeter-Projekt, damit sich z.B. die .bin von Sensormeter
